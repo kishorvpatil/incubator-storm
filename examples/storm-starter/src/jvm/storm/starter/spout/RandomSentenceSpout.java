@@ -31,17 +31,26 @@ import java.util.Random;
 public class RandomSentenceSpout extends BaseRichSpout {
   SpoutOutputCollector _collector;
   Random _rand;
+  private int sleepMillis = 100;
 
+  public RandomSentenceSpout() {
+  }
+
+  public RandomSentenceSpout(int sleepMillis) {
+    this.sleepMillis = sleepMillis;
+  }
 
   @Override
-  public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+   public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
     _collector = collector;
     _rand = new Random();
   }
 
   @Override
   public void nextTuple() {
-    Utils.sleep(100);
+    if(sleepMillis != 0) {
+      Utils.sleep(sleepMillis);
+    }
     String[] sentences = new String[]{ "the cow jumped over the moon", "an apple a day keeps the doctor away",
         "four score and seven years ago", "snow white and the seven dwarfs", "i am at two with nature" };
     String sentence = sentences[_rand.nextInt(sentences.length)];
