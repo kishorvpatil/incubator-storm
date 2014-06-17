@@ -304,7 +304,7 @@
     ))
 (defn get-error-port [error error-host top-id]
   (if error
-    (worker-log-link error-host (.get_port ^ErrorInfo error) top-id)
+    (worker-log-link error-host (.get_port ^ErrorInfo error))
     ""
     ))
 
