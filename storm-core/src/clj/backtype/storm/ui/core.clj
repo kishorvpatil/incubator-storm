@@ -561,7 +561,6 @@
      "acked" (get-in stats [:acked window])
      "failed" (get-in stats [:failed window])
      "errorHost" error-host
-     "errorPort" (get-error-port last-error error-host top-id)
      "errorPort" error-port
      "errorWorkerLogLink" (worker-log-link error-host error-port)
      "lastError" (get-error-data last-error)
@@ -696,7 +695,7 @@
        {"time" (date-str (.get_error_time_secs e))
         "errorHost" (.get_host e)
         "errorPort"  (.get_port e)
-        "errorWorkerLogLink"  (worker-log-link (.get_host e) (.get_port e) topology-id)
+        "errorWorkerLogLink"  (worker-log-link (.get_host e) (.get_port e))
         "error" (.get_error e)})}))
 
 (defn spout-stats
@@ -804,7 +803,8 @@
           summs (component-task-summs summ topology component)
           spec (cond (= type :spout) (spout-stats window summ component summs include-sys?)
                      (= type :bolt) (bolt-stats window summ component summs include-sys?))
-          errors (component-errors (get (.get_errors summ) component) topology-id)]
+          errors (component-errors (get (.get_errors summ) component) topology-id)
+          _ (log-message "Component Errors: " errors )]
       (merge
        {"id" component
          "name" (.get_name summ)
