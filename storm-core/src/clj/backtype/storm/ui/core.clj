@@ -803,8 +803,7 @@
           summs (component-task-summs summ topology component)
           spec (cond (= type :spout) (spout-stats window summ component summs include-sys?)
                      (= type :bolt) (bolt-stats window summ component summs include-sys?))
-          errors (component-errors (get (.get_errors summ) component) topology-id)
-          _ (log-message "Component Errors: " errors )]
+          errors (component-errors (get (.get_errors summ) component) topology-id)]
       (merge
        {"id" component
          "name" (.get_name summ)
