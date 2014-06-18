@@ -304,7 +304,7 @@
     ))
 (defn get-error-port [error error-host top-id]
   (if error
-    (worker-log-link error-host (.get_port ^ErrorInfo error))
+    (.get_port ^ErrorInfo error)
     ""
     ))
 
@@ -550,6 +550,7 @@
                       stats-seq include-sys?))
               last-error (most-recent-error (get errors id))
               error-host (get-error-host last-error)
+              error-port (get-error-port last-error error-host top-id)
               ]]
     {"spoutId" id
      "executors" (count summs)
@@ -561,7 +562,9 @@
      "failed" (get-in stats [:failed window])
      "errorHost" error-host
      "errorPort" (get-error-port last-error error-host top-id)
-     "lastError" [:span (get-error-span last-error) (get-error-data last-error)]
+     "errorPort" error-port
+     "errorWorkerLogLink" (worker-log-link error-host error-port)
+     "lastError" (get-error-data last-error)
       }))
 
 (defn bolt-comp [top-id summ-map errors window include-sys?]
@@ -572,6 +575,7 @@
                       stats-seq include-sys?))
               last-error (most-recent-error (get errors id))
               error-host (get-error-host last-error)
+              error-port (get-error-port last-error error-host top-id)
               ]]
     {"boltId" id
      "executors" (count summs)
@@ -585,8 +589,9 @@
      "acked" (get-in stats [:acked window])
      "failed" (get-in stats [:failed window])
      "errorHost" error-host
-     "errorPort" (get-error-port last-error error-host top-id)
-     "lastError" [:span (get-error-span last-error) (get-error-data last-error)]
+     "errorPort" error-port
+     "errorWorkerLogLink" (worker-log-link error-host error-port)
+     "lastError" (get-error-data last-error)
      }))
 
 (defn topology-summary [^TopologyInfo summ]
@@ -690,7 +695,8 @@
      (for [^ErrorInfo e errors]
        {"time" (date-str (.get_error_time_secs e))
         "errorHost" (.get_host e)
-        "errorPort"  (worker-log-link (.get_host e) (.get_port e) topology-id)
+        "errorPort"  (.get_port e)
+        "errorWorkerLogLink"  (worker-log-link (.get_host e) (.get_port e) topology-id)
         "error" (.get_error e)})}))
 
 (defn spout-stats
