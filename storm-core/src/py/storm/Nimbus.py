@@ -1159,9 +1159,6 @@ class submitTopology_args:
     (4, TType.STRUCT, 'topology', (StormTopology, StormTopology.thrift_spec), None, ), # 4
   )
 
-  def __hash__(self):
-    return 0 + hash(self.name) + hash(self.uploadedJarLocation) + hash(self.jsonConf) + hash(self.topology)
-
   def __init__(self, name=None, uploadedJarLocation=None, jsonConf=None, topology=None,):
     self.name = name
     self.uploadedJarLocation = uploadedJarLocation
@@ -1231,6 +1228,40 @@ class submitTopology_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.uploadedJarLocation) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.jsonConf) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.topology) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1256,9 +1287,6 @@ class submitTopology_result:
     (2, TType.STRUCT, 'ite', (InvalidTopologyException, InvalidTopologyException.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 3
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.ite) + hash(self.aze)
 
   def __init__(self, e=None, ite=None, aze=None,):
     self.e = e
@@ -1321,6 +1349,34 @@ class submitTopology_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.ite) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1350,9 +1406,6 @@ class submitTopologyWithOpts_args:
     (4, TType.STRUCT, 'topology', (StormTopology, StormTopology.thrift_spec), None, ), # 4
     (5, TType.STRUCT, 'options', (SubmitOptions, SubmitOptions.thrift_spec), None, ), # 5
   )
-
-  def __hash__(self):
-    return 0 + hash(self.name) + hash(self.uploadedJarLocation) + hash(self.jsonConf) + hash(self.topology) + hash(self.options)
 
   def __init__(self, name=None, uploadedJarLocation=None, jsonConf=None, topology=None, options=None,):
     self.name = name
@@ -1434,6 +1487,46 @@ class submitTopologyWithOpts_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.uploadedJarLocation) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.jsonConf) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.topology) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.options) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1459,9 +1552,6 @@ class submitTopologyWithOpts_result:
     (2, TType.STRUCT, 'ite', (InvalidTopologyException, InvalidTopologyException.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 3
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.ite) + hash(self.aze)
 
   def __init__(self, e=None, ite=None, aze=None,):
     self.e = e
@@ -1524,6 +1614,34 @@ class submitTopologyWithOpts_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.ite) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1545,9 +1663,6 @@ class killTopology_args:
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.name)
 
   def __init__(self, name=None,):
     self.name = name
@@ -1587,6 +1702,22 @@ class killTopology_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1610,9 +1741,6 @@ class killTopology_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.aze)
 
   def __init__(self, e=None, aze=None,):
     self.e = e
@@ -1664,6 +1792,28 @@ class killTopology_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1687,9 +1837,6 @@ class killTopologyWithOpts_args:
     (1, TType.STRING, 'name', None, None, ), # 1
     (2, TType.STRUCT, 'options', (KillOptions, KillOptions.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.name) + hash(self.options)
 
   def __init__(self, name=None, options=None,):
     self.name = name
@@ -1740,6 +1887,28 @@ class killTopologyWithOpts_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.options) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1763,9 +1932,6 @@ class killTopologyWithOpts_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.aze)
 
   def __init__(self, e=None, aze=None,):
     self.e = e
@@ -1817,6 +1983,28 @@ class killTopologyWithOpts_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1838,9 +2026,6 @@ class activate_args:
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.name)
 
   def __init__(self, name=None,):
     self.name = name
@@ -1880,6 +2065,22 @@ class activate_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1903,9 +2104,6 @@ class activate_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.aze)
 
   def __init__(self, e=None, aze=None,):
     self.e = e
@@ -1957,6 +2155,28 @@ class activate_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -1978,9 +2198,6 @@ class deactivate_args:
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.name)
 
   def __init__(self, name=None,):
     self.name = name
@@ -2020,6 +2237,22 @@ class deactivate_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2043,9 +2276,6 @@ class deactivate_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.aze)
 
   def __init__(self, e=None, aze=None,):
     self.e = e
@@ -2097,6 +2327,28 @@ class deactivate_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2120,9 +2372,6 @@ class rebalance_args:
     (1, TType.STRING, 'name', None, None, ), # 1
     (2, TType.STRUCT, 'options', (RebalanceOptions, RebalanceOptions.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.name) + hash(self.options)
 
   def __init__(self, name=None, options=None,):
     self.name = name
@@ -2173,6 +2422,28 @@ class rebalance_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.options) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2198,9 +2469,6 @@ class rebalance_result:
     (2, TType.STRUCT, 'ite', (InvalidTopologyException, InvalidTopologyException.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 3
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.ite) + hash(self.aze)
 
   def __init__(self, e=None, ite=None, aze=None,):
     self.e = e
@@ -2263,6 +2531,34 @@ class rebalance_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.ite) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2286,9 +2582,6 @@ class uploadNewCredentials_args:
     (1, TType.STRING, 'name', None, None, ), # 1
     (2, TType.STRUCT, 'creds', (Credentials, Credentials.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.name) + hash(self.creds)
 
   def __init__(self, name=None, creds=None,):
     self.name = name
@@ -2339,6 +2632,28 @@ class uploadNewCredentials_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.name) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.creds) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2364,9 +2679,6 @@ class uploadNewCredentials_result:
     (2, TType.STRUCT, 'ite', (InvalidTopologyException, InvalidTopologyException.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 3
   )
-
-  def __hash__(self):
-    return 0 + hash(self.e) + hash(self.ite) + hash(self.aze)
 
   def __init__(self, e=None, ite=None, aze=None,):
     self.e = e
@@ -2429,6 +2741,34 @@ class uploadNewCredentials_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.ite) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2444,9 +2784,6 @@ class beginFileUpload_args:
 
   thrift_spec = (
   )
-
-  def __hash__(self):
-    return 0
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -2474,6 +2811,16 @@ class beginFileUpload_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2496,9 +2843,6 @@ class beginFileUpload_result:
     (0, TType.STRING, 'success', None, None, ), # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.aze)
 
   def __init__(self, success=None, aze=None,):
     self.success = success
@@ -2549,6 +2893,28 @@ class beginFileUpload_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2572,9 +2938,6 @@ class uploadChunk_args:
     (1, TType.STRING, 'location', None, None, ), # 1
     (2, TType.STRING, 'chunk', None, None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.location) + hash(self.chunk)
 
   def __init__(self, location=None, chunk=None,):
     self.location = location
@@ -2624,6 +2987,28 @@ class uploadChunk_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.location) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.chunk) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2645,9 +3030,6 @@ class uploadChunk_result:
     None, # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.aze)
 
   def __init__(self, aze=None,):
     self.aze = aze
@@ -2688,6 +3070,22 @@ class uploadChunk_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2709,9 +3107,6 @@ class finishFileUpload_args:
     None, # 0
     (1, TType.STRING, 'location', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.location)
 
   def __init__(self, location=None,):
     self.location = location
@@ -2751,6 +3146,22 @@ class finishFileUpload_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.location) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2772,9 +3183,6 @@ class finishFileUpload_result:
     None, # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.aze)
 
   def __init__(self, aze=None,):
     self.aze = aze
@@ -2815,6 +3223,22 @@ class finishFileUpload_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2836,9 +3260,6 @@ class beginFileDownload_args:
     None, # 0
     (1, TType.STRING, 'file', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.file)
 
   def __init__(self, file=None,):
     self.file = file
@@ -2878,6 +3299,22 @@ class beginFileDownload_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.file) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2900,9 +3337,6 @@ class beginFileDownload_result:
     (0, TType.STRING, 'success', None, None, ), # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.aze)
 
   def __init__(self, success=None, aze=None,):
     self.success = success
@@ -2953,6 +3387,28 @@ class beginFileDownload_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -2974,9 +3430,6 @@ class downloadChunk_args:
     None, # 0
     (1, TType.STRING, 'id', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.id)
 
   def __init__(self, id=None,):
     self.id = id
@@ -3016,6 +3469,22 @@ class downloadChunk_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.id) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3038,9 +3507,6 @@ class downloadChunk_result:
     (0, TType.STRING, 'success', None, None, ), # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.aze)
 
   def __init__(self, success=None, aze=None,):
     self.success = success
@@ -3091,6 +3557,28 @@ class downloadChunk_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3106,9 +3594,6 @@ class getNimbusConf_args:
 
   thrift_spec = (
   )
-
-  def __hash__(self):
-    return 0
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -3136,6 +3621,16 @@ class getNimbusConf_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3158,9 +3653,6 @@ class getNimbusConf_result:
     (0, TType.STRING, 'success', None, None, ), # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.aze)
 
   def __init__(self, success=None, aze=None,):
     self.success = success
@@ -3211,6 +3703,28 @@ class getNimbusConf_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3226,9 +3740,6 @@ class getClusterInfo_args:
 
   thrift_spec = (
   )
-
-  def __hash__(self):
-    return 0
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -3256,6 +3767,16 @@ class getClusterInfo_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3278,9 +3799,6 @@ class getClusterInfo_result:
     (0, TType.STRUCT, 'success', (ClusterSummary, ClusterSummary.thrift_spec), None, ), # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.aze)
 
   def __init__(self, success=None, aze=None,):
     self.success = success
@@ -3332,6 +3850,28 @@ class getClusterInfo_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3353,9 +3893,6 @@ class getTopologyInfo_args:
     None, # 0
     (1, TType.STRING, 'id', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.id)
 
   def __init__(self, id=None,):
     self.id = id
@@ -3395,6 +3932,22 @@ class getTopologyInfo_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.id) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3419,9 +3972,6 @@ class getTopologyInfo_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.e) + hash(self.aze)
 
   def __init__(self, success=None, e=None, aze=None,):
     self.success = success
@@ -3484,6 +4034,34 @@ class getTopologyInfo_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3505,9 +4083,6 @@ class getTopologyConf_args:
     None, # 0
     (1, TType.STRING, 'id', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.id)
 
   def __init__(self, id=None,):
     self.id = id
@@ -3547,6 +4122,22 @@ class getTopologyConf_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.id) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3571,9 +4162,6 @@ class getTopologyConf_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.e) + hash(self.aze)
 
   def __init__(self, success=None, e=None, aze=None,):
     self.success = success
@@ -3635,6 +4223,34 @@ class getTopologyConf_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3656,9 +4272,6 @@ class getTopology_args:
     None, # 0
     (1, TType.STRING, 'id', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.id)
 
   def __init__(self, id=None,):
     self.id = id
@@ -3698,6 +4311,22 @@ class getTopology_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.id) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3722,9 +4351,6 @@ class getTopology_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.e) + hash(self.aze)
 
   def __init__(self, success=None, e=None, aze=None,):
     self.success = success
@@ -3787,6 +4413,34 @@ class getTopology_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3808,9 +4462,6 @@ class getUserTopology_args:
     None, # 0
     (1, TType.STRING, 'id', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.id)
 
   def __init__(self, id=None,):
     self.id = id
@@ -3850,6 +4501,22 @@ class getUserTopology_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.id) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -3874,9 +4541,6 @@ class getUserTopology_result:
     (1, TType.STRUCT, 'e', (NotAliveException, NotAliveException.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 2
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.e) + hash(self.aze)
 
   def __init__(self, success=None, e=None, aze=None,):
     self.success = success
@@ -3938,6 +4602,34 @@ class getUserTopology_result:
   def validate(self):
     return
 
+
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)

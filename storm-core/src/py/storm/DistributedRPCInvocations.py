@@ -240,9 +240,6 @@ class result_args:
     (2, TType.STRING, 'result', None, None, ), # 2
   )
 
-  def __hash__(self):
-    return 0 + hash(self.id) + hash(self.result)
-
   def __init__(self, id=None, result=None,):
     self.id = id
     self.result = result
@@ -291,6 +288,28 @@ class result_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.id) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.result) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -312,9 +331,6 @@ class result_result:
     None, # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.aze)
 
   def __init__(self, aze=None,):
     self.aze = aze
@@ -355,6 +371,22 @@ class result_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -376,9 +408,6 @@ class fetchRequest_args:
     None, # 0
     (1, TType.STRING, 'functionName', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.functionName)
 
   def __init__(self, functionName=None,):
     self.functionName = functionName
@@ -418,6 +447,22 @@ class fetchRequest_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.functionName) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -440,9 +485,6 @@ class fetchRequest_result:
     (0, TType.STRUCT, 'success', (DRPCRequest, DRPCRequest.thrift_spec), None, ), # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.aze)
 
   def __init__(self, success=None, aze=None,):
     self.success = success
@@ -494,6 +536,28 @@ class fetchRequest_result:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -515,9 +579,6 @@ class failRequest_args:
     None, # 0
     (1, TType.STRING, 'id', None, None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.id)
 
   def __init__(self, id=None,):
     self.id = id
@@ -557,6 +618,22 @@ class failRequest_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.id) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -578,9 +655,6 @@ class failRequest_result:
     None, # 0
     (1, TType.STRUCT, 'aze', (AuthorizationException, AuthorizationException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.aze)
 
   def __init__(self, aze=None,):
     self.aze = aze
@@ -620,6 +694,22 @@ class failRequest_result:
   def validate(self):
     return
 
+
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.aze) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
