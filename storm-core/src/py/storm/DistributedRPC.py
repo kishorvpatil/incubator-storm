@@ -136,9 +136,6 @@ class execute_args:
     (2, TType.STRING, 'funcArgs', None, None, ), # 2
   )
 
-  def __hash__(self):
-    return 0 + hash(self.functionName) + hash(self.funcArgs)
-
   def __init__(self, functionName=None, funcArgs=None,):
     self.functionName = functionName
     self.funcArgs = funcArgs
@@ -187,6 +184,28 @@ class execute_args:
     return
 
 
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.functionName) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.funcArgs) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
+
   def __repr__(self):
     L = ['%s=%r' % (key, value)
       for key, value in self.__dict__.iteritems()]
@@ -209,9 +228,6 @@ class execute_result:
     (0, TType.STRING, 'success', None, None, ), # 0
     (1, TType.STRUCT, 'e', (DRPCExecutionException, DRPCExecutionException.thrift_spec), None, ), # 1
   )
-
-  def __hash__(self):
-    return 0 + hash(self.success) + hash(self.e)
 
   def __init__(self, success=None, e=None,):
     self.success = success
@@ -261,6 +277,28 @@ class execute_result:
   def validate(self):
     return
 
+
+  def __hash__(self):
+    value = ctypes.c_uint32(0x345678)
+    mult = ctypes.c_uint32(0xf4243)
+    uhash = ctypes.c_uint32(0xf4243)
+    members_count = members.size()
+    obj_hash = ctypes.c_uint32( hash(self.success) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    obj_hash = ctypes.c_uint32( hash(self.e) )
+    if obj_hash == -1:
+       return -1
+    value = (value ^ obj_hash) * mult
+    members_count -= 1
+    mult = ctypes.c_uint32(82520L + members_count + members_count).value
+    value += 97531L
+    if value == ctypes.c_uint32(-1):
+       return -2
+    return value
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
