@@ -290,7 +290,7 @@
                     <relocations>
                         <relocation>
                             <pattern>org.apache.thrift</pattern>
-                            <shadedPattern>org.apache.thrift7</shadedPattern>
+                            <shadedPattern>org.apache.thrift9</shadedPattern>
                         </relocation>
                     </relocations>
                     <transformers>
