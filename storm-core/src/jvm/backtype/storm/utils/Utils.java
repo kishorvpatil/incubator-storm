@@ -45,7 +45,6 @@ import java.util.UUID;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.commons.lang.StringUtils;
-import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.apache.thrift.TException;
 import org.json.simple.JSONValue;
 import org.yaml.snakeyaml.Yaml;
@@ -360,7 +359,7 @@ public class Utils {
                 .connectString(zkStr)
                 .connectionTimeoutMs(Utils.getInt(conf.get(Config.STORM_ZOOKEEPER_CONNECTION_TIMEOUT)))
                 .sessionTimeoutMs(Utils.getInt(conf.get(Config.STORM_ZOOKEEPER_SESSION_TIMEOUT)))
-                .retryPolicy(new BoundedExponentialBackoffRetry(
+                .retryPolicy(new StormBoundedExponentialBackoffRetry(
                             Utils.getInt(conf.get(Config.STORM_ZOOKEEPER_RETRY_INTERVAL)),
                             Utils.getInt(conf.get(Config.STORM_ZOOKEEPER_RETRY_TIMES)),
                             Utils.getInt(conf.get(Config.STORM_ZOOKEEPER_RETRY_INTERVAL_CEILING))));
