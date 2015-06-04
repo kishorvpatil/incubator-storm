@@ -420,7 +420,6 @@
                             <include>org.tukaani:xz</include>
                             <include>org.yaml:snakeyaml</include>
                             <include>org.jgrapht:jgrapht-core</include>
-                            <include>jline:jline</include>
                             <include>commons-httpclient:commons-httpclient</include>
                             <include>org.apache.commons:commons-compress</include>
                             <include>org.apache.commons:commons-exec</include>
@@ -429,6 +428,7 @@
                             <include>commons-fileupload:commons-fileupload</include>
                             <include>commons-lang:commons-lang</include>
                             <include>com.googlecode.json-simple:json-simple</include>
+                            <include>com.googlecode.com.googlecode.disruptor:disruptor</include>
                             <include>org.clojure:math.numeric-tower</include>
                             <include>org.clojure:tools.cli</include>
                             <include>org.clojure:tools.macro</include>
@@ -548,6 +548,10 @@
                         <relocation>
                           <pattern>org.json.simple</pattern>
                           <shadedPattern>org.apache.storm.json.simple</shadedPattern>
+                        </relocation>
+                        <relocation>
+                          <pattern>com.lmax.disruptor</pattern>
+                          <shadedPattern>org.apache.storm.lmax.disruptor</shadedPattern>
                         </relocation>
                         <relocation>
                           <pattern>clojure.math</pattern>
