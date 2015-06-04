@@ -486,6 +486,10 @@
                             <shadedPattern>org.apache.storm.zookeeper</shadedPattern>
                         </relocation>
                         <relocation>
+                            <pattern>org.apache.jute</pattern>
+                            <shadedPattern>org.apache.storm.jute</shadedPattern>
+                        </relocation>
+                        <relocation>
                             <pattern>org.apache.curator</pattern>
                             <shadedPattern>org.apache.storm.curator</shadedPattern>
                         </relocation>
