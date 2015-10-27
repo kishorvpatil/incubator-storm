@@ -49,6 +49,7 @@ import java.nio.channels.WritableByteChannel;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -637,18 +638,21 @@ public class Utils {
     }
 
   public static void handleUncaughtException(Throwable t) {
-    if (t != null && t instanceof Error) {
-      if (t instanceof OutOfMemoryError) {
-        try {
-          System.err.println("Halting due to Out Of Memory Error..." + Thread.currentThread().getName());
-        } catch (Throwable err) {
-          //Again we don't want to exit because of logging issues.
+    if (t != null )
+      if( t instanceof Error) {
+        if (t instanceof OutOfMemoryError) {
+          try {
+            System.err.println("Halting due to Out Of Memory Error..." + Thread.currentThread().getName());
+          } catch (Throwable err) {
+            //Again we don't want to exit because of logging issues.
+          }
+          Runtime.getRuntime().halt(-1);
+        } else {
+          LOG.error("Received error....terminating process...", t);
+          Runtime.getRuntime().exit(-2);
         }
-        Runtime.getRuntime().halt(-1);
       } else {
-        //Running in daemon mode, we would pass Error to calling thread.
-        throw (Error) t;
-      }
+        LOG.error("Ignoring exception error.......", t);
     }
   }
 }

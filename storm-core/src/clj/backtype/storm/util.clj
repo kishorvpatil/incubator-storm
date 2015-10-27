@@ -1051,12 +1051,7 @@
   (Thread/setDefaultUncaughtExceptionHandler
     (proxy [Thread$UncaughtExceptionHandler] []
       (uncaughtException [thread thrown]
-        (try
-          (Utils/handleUncaughtException thrown)
-          (catch Error err
-            (do
-              (log-error err "Received error in main thread.. terminating server...")
-              (.exit (Runtime/getRuntime) -2))))))))
+        (Utils/handleUncaughtException thrown)))))
 
 (defn redact-value
   "Hides value for k in coll for printing coll safely"

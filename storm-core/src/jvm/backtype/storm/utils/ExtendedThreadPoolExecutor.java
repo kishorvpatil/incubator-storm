@@ -27,6 +27,10 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 public class ExtendedThreadPoolExecutor extends ThreadPoolExecutor{
 
   public ExtendedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue) {
@@ -44,6 +48,7 @@ public class ExtendedThreadPoolExecutor extends ThreadPoolExecutor{
   public ExtendedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
   }
+  private static final Logger LOG = LoggerFactory.getLogger(ExtendedThreadPoolExecutor.class);
 
   @Override
   protected void afterExecute(Runnable r, Throwable t) {

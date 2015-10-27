@@ -25,11 +25,6 @@ public class NettyUncaughtExceptionHandler implements Thread.UncaughtExceptionHa
   private static final Logger LOG = LoggerFactory.getLogger(NettyUncaughtExceptionHandler.class);
   @Override
   public void uncaughtException(Thread t, Throwable e) {
-    try {
-      Utils.handleUncaughtException(e);
-    } catch (Error error) {
-      LOG.info("Received error in netty thread.. terminating server...");
-      Runtime.getRuntime().exit(1);
-    }
+    Utils.handleUncaughtException(e);
   }
 }
