@@ -20,8 +20,12 @@
 package backtype.storm.utils;
 
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class WorkerBackpressureThread extends Thread {
+    private static final Logger LOG = LoggerFactory.getLogger(WorkerBackpressureThread.class);
 
     Object trigger;
     Object workerData;
@@ -50,6 +54,10 @@ public class WorkerBackpressureThread extends Thread {
                     trigger.wait(100);
                 }
                 callback.onEvent(workerData); // check all executors and update zk backpressure throttle for the worker if needed
+                if (Thread.interrupted()) {
+                    LOG.info("Consumer is interrupted..");
+                    return;
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
