@@ -26,9 +26,11 @@ import com.lmax.disruptor.InsufficientCapacityException;
 import org.junit.Assert;
 import org.junit.Test;
 import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DisruptorQueueTest extends TestCase {
-
+    private static final Logger LOG = LoggerFactory.getLogger(DisruptorQueueTest.class);
     private final static int TIMEOUT = 1000; // MS
     private final static int PRODUCER_NUM = 4;
 
@@ -128,6 +130,10 @@ public class DisruptorQueueTest extends TestCase {
         public void run() {
             for (long i = 0; i < _max; i++) {
                 queue.publish(i);
+              if (Thread.interrupted()) {
+                LOG.info("Producer is interrupted..");
+                return;
+              }
             }
         }
     };
@@ -146,6 +152,11 @@ public class DisruptorQueueTest extends TestCase {
             try {
                 while(true) {
                     queue.consumeBatchWhenAvailable(handler);
+                    if (Thread.interrupted()) {
+                     // We've been interrupted
+                     LOG.info("Consumer is interrupted..");
+                     return;
+                    }
                 }
             } catch(RuntimeException e) {
                 //break
