@@ -14,7 +14,7 @@ package org.apache.storm.planner;
 
 
 public class CompoundTask
-    //        implements IBolt
+    // implements IBolt
 {
 
 }

@@ -532,7 +532,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
      * ISaslClient interface
      **/
     public void channelConnected(Channel channel) {
-        //        setChannel(channel);
+        // setChannel(channel);
     }
 
     public void channelReady() {

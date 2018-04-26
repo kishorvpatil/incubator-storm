@@ -197,16 +197,16 @@ public class TridentBoltExecutor implements IRichBolt {
 
 
         TrackedBatch tracked = (TrackedBatch) _batches.get(id.getId());
-        //        if(_batches.size() > 10 && _context.getThisTaskIndex() == 0) {
-        //            System.out.println("Received in " + _context.getThisComponentId() + " " + _context.getThisTaskIndex()
-        //                    + " (" + _batches.size() + ")" +
-        //                    "\ntuple: " + tuple +
-        //                    "\nwith tracked " + tracked +
-        //                    "\nwith id " + id +
-        //                    "\nwith group " + batchGroup
-        //                    + "\n");
+        // if(_batches.size() > 10 && _context.getThisTaskIndex() == 0) {
+        //     System.out.println("Received in " + _context.getThisComponentId() + " " + _context.getThisTaskIndex()
+        //      + " (" + _batches.size() + ")" +
+        //      "\ntuple: " + tuple +
+        //      "\nwith tracked " + tracked +
+        //      "\nwith id " + id +
+        //      "\nwith group " + batchGroup
+        //      + "\n");
         //
-        //        }
+        // }
         //System.out.println("Num tracked: " + _batches.size() + " " + _context.getThisComponentId() + " " + _context.getThisTaskIndex());
 
         // this code here ensures that only one attempt is ever tracked for a batch, so when

@@ -24,19 +24,19 @@ import org.jctools.queues.MpscArrayQueue;
 
 public class JCToolsPerfTest {
     public static void main(String[] args) throws Exception {
-        //        oneProducer1Consumer();
-        //        twoProducer1Consumer();
-        //        threeProducer1Consumer();
-        //        oneProducer2Consumers();
-        //        producerFwdConsumer();
+        // oneProducer1Consumer();
+        // twoProducer1Consumer();
+        // threeProducer1Consumer();
+        // oneProducer2Consumers();
+        // producerFwdConsumer();
 
-        //        JCQueue spoutQ = new JCQueue("spoutQ", 1024, 100, 0);
-        //        JCQueue ackQ = new JCQueue("ackQ", 1024, 100, 0);
+        // JCQueue spoutQ = new JCQueue("spoutQ", 1024, 100, 0);
+        // JCQueue ackQ = new JCQueue("ackQ", 1024, 100, 0);
         //
-        //        final AckingProducer ackingProducer = new AckingProducer(spoutQ, ackQ);
-        //        final Acker acker = new Acker(ackQ, spoutQ);
+        // final AckingProducer ackingProducer = new AckingProducer(spoutQ, ackQ);
+        // final Acker acker = new Acker(ackQ, spoutQ);
         //
-        //        runAllThds(ackingProducer, acker);
+        // runAllThds(ackingProducer, acker);
 
         while (true) {
             Thread.sleep(1000);

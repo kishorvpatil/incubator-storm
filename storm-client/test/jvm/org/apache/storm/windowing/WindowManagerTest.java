@@ -307,7 +307,7 @@ public class WindowManagerTest {
         // send a watermark event, which should trigger three windows.
         windowManager.add(new WaterMarkEvent<Integer>(631));
 
-        //        System.out.println(listener.allOnActivationEvents);
+        // System.out.println(listener.allOnActivationEvents);
         assertEquals(3, listener.allOnActivationEvents.size());
         assertEquals(seq(1, 3), listener.allOnActivationEvents.get(0));
         assertEquals(seq(1, 4), listener.allOnActivationEvents.get(1));
@@ -380,7 +380,7 @@ public class WindowManagerTest {
 
         listener.clear();
         windowManager.add(new WaterMarkEvent<Integer>(674));
-        //        System.out.println(listener.allOnActivationEvents);
+        // System.out.println(listener.allOnActivationEvents);
         assertEquals(4, listener.allOnActivationEvents.size());
         // same set of events part of three windows
         assertEquals(seq(4, 6), listener.allOnActivationEvents.get(0));
@@ -407,7 +407,7 @@ public class WindowManagerTest {
         windowManager.add(8, 636);
         // send a watermark event, which should trigger three windows.
         windowManager.add(new WaterMarkEvent<Integer>(631));
-        //        System.out.println(listener.allOnActivationEvents);
+        // System.out.println(listener.allOnActivationEvents);
 
         assertEquals(2, listener.allOnActivationEvents.size());
         assertEquals(seq(1, 3), listener.allOnActivationEvents.get(0));
@@ -422,7 +422,7 @@ public class WindowManagerTest {
 
         listener.clear();
         windowManager.add(new WaterMarkEvent<Integer>(674));
-        //        System.out.println(listener.allOnActivationEvents);
+        // System.out.println(listener.allOnActivationEvents);
         assertEquals(2, listener.allOnActivationEvents.size());
         // same set of events part of three windows
         assertEquals(seq(9), listener.allOnActivationEvents.get(0));
@@ -504,7 +504,7 @@ public class WindowManagerTest {
         windowManager.add(8, 636);
         // send a watermark event, which should trigger three windows.
         windowManager.add(new WaterMarkEvent<Integer>(631));
-        //        System.out.println(listener.allOnActivationEvents);
+        // System.out.println(listener.allOnActivationEvents);
         assertEquals(3, listener.allOnActivationEvents.size());
         assertEquals(seq(1, 3), listener.allOnActivationEvents.get(0));
         assertEquals(seq(1, 4), listener.allOnActivationEvents.get(1));

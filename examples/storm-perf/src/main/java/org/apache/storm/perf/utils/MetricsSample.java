@@ -159,7 +159,7 @@ public class MetricsSample {
         ret.spoutEmitted = spoutEmitted;
         ret.spoutTransferred = spoutTransferred;
         ret.sampleTime = System.currentTimeMillis();
-        //        ret.numSupervisors = clusterSummary.get_supervisors_size();
+        // ret.numSupervisors = clusterSummary.get_supervisors_size();
         ret.numWorkers = 0;
         ret.numExecutors = 0;
         ret.numTasks = 0;

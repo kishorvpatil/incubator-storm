@@ -63,7 +63,7 @@ public class LowThroughputTopo {
         BoltDeclarer bd = builder.setBolt(BOLT_ID, bolt, Helper.getInt(conf, BOLT_COUNT, 1));
 
         bd.localOrShuffleGrouping(SPOUT_ID);
-        //        bd.shuffleGrouping(SPOUT_ID);
+        // bd.shuffleGrouping(SPOUT_ID);
         return builder.createTopology();
     }
 

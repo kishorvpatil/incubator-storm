@@ -44,12 +44,12 @@ public class KryoTupleSerializer implements ITupleSerializer {
     }
 
     //    public long crc32(Tuple tuple) {
-    //        try {
-    //            CRC32OutputStream hasher = new CRC32OutputStream();
-    //            _kryo.serializeInto(tuple.getValues(), hasher);
-    //            return hasher.getValue();
-    //        } catch (IOException e) {
-    //            throw new RuntimeException(e);
-    //        }
+    // try {
+    //     CRC32OutputStream hasher = new CRC32OutputStream();
+    //     _kryo.serializeInto(tuple.getValues(), hasher);
+    //     return hasher.getValue();
+    // } catch (IOException e) {
+    //     throw new RuntimeException(e);
+    // }
     //    }
 }

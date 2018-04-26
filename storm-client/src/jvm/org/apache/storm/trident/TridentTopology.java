@@ -117,9 +117,9 @@ public class TridentTopology {
 
     // automatically turn it into a batch spout, should take parameters as to how much to batch
     //    public Stream newStream(IRichSpout spout) {
-    //        Node n = new SpoutNode(getUniqueStreamId(), TridentUtils.getSingleOutputStreamFields(spout), null, spout, SpoutNode
+    // Node n = new SpoutNode(getUniqueStreamId(), TridentUtils.getSingleOutputStreamFields(spout), null, spout, SpoutNode
     // .SpoutType.BATCH);
-    //        return addNode(n);
+    // return addNode(n);
     //    }
 
     private static Map<String, Number> mergeDefaultResources(Map<String, Number> res, Map<String, Number> defaultConfig) {
@@ -855,8 +855,8 @@ public class TridentTopology {
             }
         }
 
-        //        System.out.println("GRAPH:");
-        //        System.out.println(graph);
+        // System.out.println("GRAPH:");
+        // System.out.println(graph);
 
         Map<Group, Integer> parallelisms = getGroupParallelisms(graph, grouper, mergedGroups);
 

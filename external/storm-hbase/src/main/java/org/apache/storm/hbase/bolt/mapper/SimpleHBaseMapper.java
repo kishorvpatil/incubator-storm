@@ -58,8 +58,8 @@ public class SimpleHBaseMapper implements HBaseMapper {
     }
 
     //    public SimpleTridentHBaseMapper withTimestampField(String timestampField){
-    //        this.timestampField = timestampField;
-    //        return this;
+    // this.timestampField = timestampField;
+    // return this;
     //    }
 
     @Override

@@ -54,7 +54,7 @@ public class TopologyBuilderTest {
     // TODO enable if setStateSpout gets implemented
     //    @Test(expected = IllegalArgumentException.class)
     //    public void testSetStateSpout() {
-    //        builder.setStateSpout("stateSpout", mock(IRichStateSpout.class), 0);
+    // builder.setStateSpout("stateSpout", mock(IRichStateSpout.class), 0);
     //    }
 
     @Test

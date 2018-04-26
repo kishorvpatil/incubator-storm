@@ -27,15 +27,15 @@ public class JCQueuePerfTest {
     // Usage: Let it and then explicitly terminate.
     // Metrics will be printed when application is terminated.
     public static void main(String[] args) throws Exception {
-        //        oneProducer1Consumer(1000);  // -- measurement 1
-        //        twoProducer1Consumer(1000);    // -- measurement 2
-        //        threeProducer1Consumer(1);   // -- measurement 3
+        // oneProducer1Consumer(1000);  // -- measurement 1
+        // twoProducer1Consumer(1000);    // -- measurement 2
+        // threeProducer1Consumer(1);   // -- measurement 3
 
-        //        oneProducer2Consumers();     // -- measurement 4
+        // oneProducer2Consumers();     // -- measurement 4
 
-        //        producerFwdConsumer();      // -- measurement 5
+        // producerFwdConsumer();      // -- measurement 5
 
-        //        ackingProducerSimulation(); // -- measurement 6
+        // ackingProducerSimulation(); // -- measurement 6
 
         while (true) {
             Thread.sleep(1000);

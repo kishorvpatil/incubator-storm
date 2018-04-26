@@ -153,7 +153,7 @@ public class SequenceFileTopology {
         }
 
         public void ack(Object msgId) {
-            //            System.out.println("ACK");
+            //     System.out.println("ACK");
             this.pending.remove(msgId);
         }
 
