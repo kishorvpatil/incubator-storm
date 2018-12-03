@@ -15,13 +15,16 @@ package org.apache.storm.command;
 import java.util.Map;
 import org.apache.storm.Config;
 import org.apache.storm.DaemonConfig;
+import org.apache.storm.shade.uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
+import org.apache.storm.utils.ConfigUtils;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.Utils;
 import org.apache.storm.zookeeper.Zookeeper;
 
 public class DevZookeeper {
     public static void main(String[] args) throws Exception {
-        Map<String, Object> conf = Utils.readStormConfig();
+        SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
+        Map<String, Object> conf = ConfigUtils.readStormConfig();
         Object port = conf.get(Config.STORM_ZOOKEEPER_PORT);
         String localPath = (String) conf.get(DaemonConfig.DEV_ZOOKEEPER_PATH);
         Utils.forceDelete(localPath);

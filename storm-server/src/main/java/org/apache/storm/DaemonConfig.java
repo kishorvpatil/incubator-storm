@@ -44,6 +44,7 @@ import static org.apache.storm.validation.ConfigValidationAnnotations.isPositive
 import static org.apache.storm.validation.ConfigValidationAnnotations.isString;
 import static org.apache.storm.validation.ConfigValidationAnnotations.isStringList;
 import static org.apache.storm.validation.ConfigValidationAnnotations.isStringOrStringList;
+import static org.apache.storm.validation.ConfigValidationAnnotations.Password;
 
 /**
  * Storm configs are specified as a plain old map. This class provides constants for all the configurations possible on a Storm cluster.
@@ -121,6 +122,9 @@ public class DaemonConfig implements Validated {
 
     /**
      * The class that specifies the eviction strategy to use in blacklist scheduler.
+     * If you are using the RAS scheduler please set this to
+     * "org.apache.storm.scheduler.blacklist.strategies.RasBlacklistStrategy" or you may
+     * get odd behavior when the cluster is full and there are blacklisted nodes.
      */
     @NotNull
     @isImplementationOfClass(implementsClass = IBlacklistStrategy.class)
@@ -300,6 +304,24 @@ public class DaemonConfig implements Validated {
     public static final String UI_PORT = "ui.port";
 
     /**
+     * This controls wheather Storm UI should bind to http port even if ui.port is > 0.
+     */
+    @isBoolean
+    public static final String UI_DISABLE_HTTP_BINDING = "ui.disable.http.binding";
+
+    /**
+     * This controls wheather Storm Logviewer should bind to http port even if logviewer.port is > 0.
+     */
+    @isBoolean
+    public static final String LOGVIEWER_DISABLE_HTTP_BINDING = "logviewer.disable.http.binding";
+
+    /**
+     * This controls wheather Storm DRPC should bind to http port even if drpc.http.port is > 0.
+     */
+    @isBoolean
+    public static final String DRPC_DISABLE_HTTP_BINDING = "drpc.disable.http.binding";
+
+    /**
      * Storm UI Project BUGTRACKER Link for reporting issue.
      */
     @isString
@@ -374,6 +396,7 @@ public class DaemonConfig implements Validated {
      * Password for the keystore for HTTPS for Storm Logviewer.
      */
     @isString
+    @Password
     public static final String LOGVIEWER_HTTPS_KEYSTORE_PASSWORD = "logviewer.https.keystore.password";
 
     /**
@@ -387,6 +410,7 @@ public class DaemonConfig implements Validated {
      * Password to the private key in the keystore for setting up HTTPS (SSL).
      */
     @isString
+    @Password
     public static final String LOGVIEWER_HTTPS_KEY_PASSWORD = "logviewer.https.key.password";
 
     /**
@@ -399,6 +423,7 @@ public class DaemonConfig implements Validated {
      * Password for the truststore for HTTPS for Storm Logviewer.
      */
     @isString
+    @Password
     public static final String LOGVIEWER_HTTPS_TRUSTSTORE_PASSWORD = "logviewer.https.truststore.password";
 
     /**
@@ -436,6 +461,18 @@ public class DaemonConfig implements Validated {
     public static final String LOGVIEWER_APPENDER_NAME = "logviewer.appender.name";
 
     /**
+     * A class implementing javax.servlet.Filter for authenticating/filtering Logviewer requests.
+     */
+    @isString
+    public static final String LOGVIEWER_FILTER = "logviewer.filter";
+
+    /**
+     * Initialization parameters for the javax.servlet.Filter for Logviewer.
+     */
+    @isMapEntryType(keyType = String.class, valueType = String.class)
+    public static final String LOGVIEWER_FILTER_PARAMS = "logviewer.filter.params";
+
+    /**
      * Childopts for Storm UI Java process.
      */
     @isStringOrStringList
@@ -448,7 +485,7 @@ public class DaemonConfig implements Validated {
     public static final String UI_FILTER = "ui.filter";
 
     /**
-     * Initialization parameters for the javax.servlet.Filter.
+     * Initialization parameters for the javax.servlet.Filter for UI.
      */
     @isMapEntryType(keyType = String.class, valueType = String.class)
     public static final String UI_FILTER_PARAMS = "ui.filter.params";
@@ -477,6 +514,7 @@ public class DaemonConfig implements Validated {
      * Password to the keystore used by Storm UI for setting up HTTPS (SSL).
      */
     @isString
+    @Password
     public static final String UI_HTTPS_KEYSTORE_PASSWORD = "ui.https.keystore.password";
 
     /**
@@ -491,6 +529,7 @@ public class DaemonConfig implements Validated {
      * Password to the private key in the keystore for setting up HTTPS (SSL).
      */
     @isString
+    @Password
     public static final String UI_HTTPS_KEY_PASSWORD = "ui.https.key.password";
 
     /**
@@ -503,6 +542,7 @@ public class DaemonConfig implements Validated {
      * Password to the truststore used by Storm UI setting up HTTPS (SSL).
      */
     @isString
+    @Password
     public static final String UI_HTTPS_TRUSTSTORE_PASSWORD = "ui.https.truststore.password";
 
     /**
@@ -559,6 +599,7 @@ public class DaemonConfig implements Validated {
      * Password to the keystore used by Storm DRPC for setting up HTTPS (SSL).
      */
     @isString
+    @Password
     public static final String DRPC_HTTPS_KEYSTORE_PASSWORD = "drpc.https.keystore.password";
 
     /**
@@ -573,6 +614,7 @@ public class DaemonConfig implements Validated {
      * Password to the private key in the keystore for setting up HTTPS (SSL).
      */
     @isString
+    @Password
     public static final String DRPC_HTTPS_KEY_PASSWORD = "drpc.https.key.password";
 
     /**
@@ -585,6 +627,7 @@ public class DaemonConfig implements Validated {
      * Password to the truststore used by Storm DRPC setting up HTTPS (SSL).
      */
     @isString
+    @Password
     public static final String DRPC_HTTPS_TRUSTSTORE_PASSWORD = "drpc.https.truststore.password";
 
     /**
@@ -1024,6 +1067,14 @@ public class DaemonConfig implements Validated {
     @isPositiveNumber(includeZero = true)
     public static String STORM_CGROUP_MEMORY_LIMIT_TOLERANCE_MARGIN_MB =
         "storm.cgroup.memory.limit.tolerance.margin.mb";
+    /**
+     * To determine whether or not to cgroups should inherit cpuset.cpus and cpuset.mems config values form parent cgroup
+     * Note that cpuset.cpus and cpuset.mems configs in a cgroup must be initialized (i.e. contain a valid value) prior to
+     * being able to launch processes in that cgroup.  The common use case for this config is when the linux distribution
+     * that is used does not support the cgroup.clone_children config.
+     */
+    @isBoolean
+    public static String STORM_CGROUP_INHERIT_CPUSET_CONFIGS = "storm.cgroup.inherit.cpuset.configs";
     /**
      * Java does not always play nicely with cgroups. It is coming but not fully implemented and not for the way storm uses cgroups. In the
      * short term you can disable the hard memory enforcement by cgroups and let the supervisor handle shooting workers going over their

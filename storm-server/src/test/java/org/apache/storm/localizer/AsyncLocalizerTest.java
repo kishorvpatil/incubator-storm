@@ -12,6 +12,7 @@
 
 package org.apache.storm.localizer;
 
+import com.codahale.metrics.Timer;
 import com.google.common.base.Joiner;
 import java.io.File;
 import java.io.FileInputStream;
@@ -79,6 +80,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.apache.storm.metric.StormMetricsRegistry;
+
 public class AsyncLocalizerTest {
     private static final Logger LOG = LoggerFactory.getLogger(AsyncLocalizerTest.class);
     private final String user1 = "user1";
@@ -117,47 +120,47 @@ public class AsyncLocalizerTest {
         ReflectionUtils mockedRU = mock(ReflectionUtils.class);
         ServerUtils mockedU = mock(ServerUtils.class);
 
-        AsyncLocalizer bl = spy(new AsyncLocalizer(conf, ops, getTestLocalizerRoot()));
+        AsyncLocalizer bl = spy(new AsyncLocalizer(conf, ops, getTestLocalizerRoot(), new StormMetricsRegistry()));
         LocallyCachedTopologyBlob jarBlob = mock(LocallyCachedTopologyBlob.class);
-        doReturn(jarBlob).when(bl).getTopoJar(topoId);
+        doReturn(jarBlob).when(bl).getTopoJar(topoId, la.get_owner());
         when(jarBlob.getLocalVersion()).thenReturn(-1L);
         when(jarBlob.getRemoteVersion(any())).thenReturn(100L);
-        when(jarBlob.downloadToTempLocation(any())).thenReturn(100L);
+        when(jarBlob.fetchUnzipToTemp(any())).thenReturn(100L);
 
         LocallyCachedTopologyBlob codeBlob = mock(LocallyCachedTopologyBlob.class);
-        doReturn(codeBlob).when(bl).getTopoCode(topoId);
+        doReturn(codeBlob).when(bl).getTopoCode(topoId, la.get_owner());
         when(codeBlob.getLocalVersion()).thenReturn(-1L);
         when(codeBlob.getRemoteVersion(any())).thenReturn(200L);
-        when(codeBlob.downloadToTempLocation(any())).thenReturn(200L);
+        when(codeBlob.fetchUnzipToTemp(any())).thenReturn(200L);
 
         LocallyCachedTopologyBlob confBlob = mock(LocallyCachedTopologyBlob.class);
-        doReturn(confBlob).when(bl).getTopoConf(topoId);
+        doReturn(confBlob).when(bl).getTopoConf(topoId, la.get_owner());
         when(confBlob.getLocalVersion()).thenReturn(-1L);
         when(confBlob.getRemoteVersion(any())).thenReturn(300L);
-        when(confBlob.downloadToTempLocation(any())).thenReturn(300L);
+        when(confBlob.fetchUnzipToTemp(any())).thenReturn(300L);
 
         ReflectionUtils origRU = ReflectionUtils.setInstance(mockedRU);
         ServerUtils origUtils = ServerUtils.setInstance(mockedU);
         try {
             when(mockedRU.newInstanceImpl(ClientBlobStore.class)).thenReturn(blobStore);
 
-            PortAndAssignment pna = new PortAndAssignment(port, la);
+            PortAndAssignment pna = new PortAndAssignmentImpl(port, la);
             Future<Void> f = bl.requestDownloadBaseTopologyBlobs(pna, null);
             f.get(20, TimeUnit.SECONDS);
 
-            verify(jarBlob).downloadToTempLocation(any());
+            verify(jarBlob).fetchUnzipToTemp(any());
             verify(jarBlob).informAllOfChangeAndWaitForConsensus();
             verify(jarBlob).commitNewVersion(100L);
             verify(jarBlob).informAllChangeComplete();
             verify(jarBlob).cleanupOrphanedData();
 
-            verify(codeBlob).downloadToTempLocation(any());
+            verify(codeBlob).fetchUnzipToTemp(any());
             verify(codeBlob).informAllOfChangeAndWaitForConsensus();
             verify(codeBlob).commitNewVersion(200L);
             verify(codeBlob).informAllChangeComplete();
             verify(codeBlob).cleanupOrphanedData();
 
-            verify(confBlob).downloadToTempLocation(any());
+            verify(confBlob).fetchUnzipToTemp(any());
             verify(confBlob).informAllOfChangeAndWaitForConsensus();
             verify(confBlob).commitNewVersion(300L);
             verify(confBlob).informAllChangeComplete();
@@ -213,10 +216,11 @@ public class AsyncLocalizerTest {
         topoConf.put(Config.TOPOLOGY_NAME, topoName);
 
         List<LocalizedResource> localizedList = new ArrayList<>();
-        LocalizedResource simpleLocal = new LocalizedResource(simpleKey, Paths.get(localizerRoot), false, ops, conf, user);
+        StormMetricsRegistry metricsRegistry = new StormMetricsRegistry();
+        LocalizedResource simpleLocal = new LocalizedResource(simpleKey, Paths.get(localizerRoot), false, ops, conf, user, metricsRegistry);
         localizedList.add(simpleLocal);
 
-        AsyncLocalizer bl = spy(new AsyncLocalizer(conf, ops, localizerRoot));
+        AsyncLocalizer bl = spy(new AsyncLocalizer(conf, ops, localizerRoot, metricsRegistry));
         ConfigUtils orig = ConfigUtils.setInstance(mockedCU);
         try {
             when(mockedCU.supervisorStormDistRootImpl(conf, topoId)).thenReturn(stormRoot);
@@ -345,7 +349,7 @@ public class AsyncLocalizerTest {
         arrUser1Keys.add(new LocalResource(archive1, true, false));
         LocalAssignment topo1 = new LocalAssignment("topo1", Collections.emptyList());
         topo1.set_owner(user1);
-        localizer.addReferences(arrUser1Keys, new PortAndAssignment(1, topo1), null);
+        localizer.addReferences(arrUser1Keys, new PortAndAssignmentImpl(1, topo1), null);
 
         ConcurrentMap<String, LocalizedResource> lrsrcFiles = localizer.getUserFiles().get(user1);
         ConcurrentMap<String, LocalizedResource> lrsrcArchives = localizer.getUserArchives().get(user1);
@@ -436,7 +440,7 @@ public class AsyncLocalizerTest {
 
             when(mockblobstore.getBlob(key1)).thenReturn(new TestInputStreamWithMeta(new
                                                                                          FileInputStream(archiveFile.getAbsolutePath()),
-                                                                                     0));
+                                                                                     0, archiveFile.length()));
 
             long timeBefore = Time.currentTimeMillis();
             Time.advanceTime(10);
@@ -444,7 +448,7 @@ public class AsyncLocalizerTest {
             assertTrue("failed to create user dir", user1Dir.mkdirs());
             LocalAssignment topo1Assignment = new LocalAssignment(topo1, Collections.emptyList());
             topo1Assignment.set_owner(user1);
-            PortAndAssignment topo1Pna = new PortAndAssignment(1, topo1Assignment);
+            PortAndAssignment topo1Pna = new PortAndAssignmentImpl(1, topo1Assignment);
             LocalizedResource lrsrc = localizer.getBlob(new LocalResource(key1, true, false), topo1Pna, null);
             Time.advanceTime(10);
             long timeAfter = Time.currentTimeMillis();
@@ -529,7 +533,7 @@ public class AsyncLocalizerTest {
             Time.advanceTime(10);
             LocalAssignment topo1Assignment = new LocalAssignment(topo1, Collections.emptyList());
             topo1Assignment.set_owner(user1);
-            PortAndAssignment topo1Pna = new PortAndAssignment(1, topo1Assignment);
+            PortAndAssignment topo1Pna = new PortAndAssignmentImpl(1, topo1Assignment);
             LocalizedResource lrsrc = localizer.getBlob(new LocalResource(key1, false, false), topo1Pna, null);
             long timeAfter = Time.currentTimeMillis();
             Time.advanceTime(10);
@@ -602,16 +606,14 @@ public class AsyncLocalizerTest {
             when(mockblobstore.getBlob(key2)).thenReturn(new TestInputStreamWithMeta(0));
             when(mockblobstore.getBlob(key3)).thenReturn(new TestInputStreamWithMeta(0));
 
-            List<LocalResource> keys = Arrays.asList(new LocalResource[]{
-                new LocalResource(key1, false, false),
-                new LocalResource(key2, false, false), new LocalResource(key3, false, false)
-            });
+            List<LocalResource> keys = Arrays.asList(new LocalResource(key1, false, false),
+                    new LocalResource(key2, false, false), new LocalResource(key3, false, false));
             File user1Dir = localizer.getLocalUserFileCacheDir(user1);
             assertTrue("failed to create user dir", user1Dir.mkdirs());
 
             LocalAssignment topo1Assignment = new LocalAssignment(topo1, Collections.emptyList());
             topo1Assignment.set_owner(user1);
-            PortAndAssignment topo1Pna = new PortAndAssignment(1, topo1Assignment);
+            PortAndAssignment topo1Pna = new PortAndAssignmentImpl(1, topo1Assignment);
             List<LocalizedResource> lrsrcs = localizer.getBlobs(keys, topo1Pna, null);
             LocalizedResource lrsrc = lrsrcs.get(0);
             LocalizedResource lrsrc2 = lrsrcs.get(1);
@@ -709,7 +711,7 @@ public class AsyncLocalizerTest {
 
         LocalAssignment topo1Assignment = new LocalAssignment(topo1, Collections.emptyList());
         topo1Assignment.set_owner(user1);
-        PortAndAssignment topo1Pna = new PortAndAssignment(1, topo1Assignment);
+        PortAndAssignment topo1Pna = new PortAndAssignmentImpl(1, topo1Assignment);
         // This should throw AuthorizationException because auth failed
         localizer.getBlob(new LocalResource(key1, false, false), topo1Pna, null);
     }
@@ -746,7 +748,8 @@ public class AsyncLocalizerTest {
         ReadableBlobMeta rbm = new ReadableBlobMeta();
         rbm.set_settable(new SettableBlobMeta(WORLD_EVERYTHING));
         when(mockblobstore.getBlobMeta(anyString())).thenReturn(rbm);
-        when(mockblobstore.getBlob(key1)).thenReturn(new TestInputStreamWithMeta(1));
+        //thenReturn always returns the same object, which is already consumed by the time User3 tries to getBlob!
+        when(mockblobstore.getBlob(key1)).thenAnswer((i) -> new TestInputStreamWithMeta(1));
         when(mockblobstore.getBlob(key2)).thenReturn(new TestInputStreamWithMeta(1));
         when(mockblobstore.getBlob(key3)).thenReturn(new TestInputStreamWithMeta(1));
 
@@ -759,17 +762,17 @@ public class AsyncLocalizerTest {
 
         LocalAssignment topo1Assignment = new LocalAssignment(topo1, Collections.emptyList());
         topo1Assignment.set_owner(user1);
-        PortAndAssignment topo1Pna = new PortAndAssignment(1, topo1Assignment);
+        PortAndAssignment topo1Pna = new PortAndAssignmentImpl(1, topo1Assignment);
         LocalizedResource lrsrc = localizer.getBlob(new LocalResource(key1, false, false), topo1Pna, null);
 
         LocalAssignment topo2Assignment = new LocalAssignment(topo2, Collections.emptyList());
         topo2Assignment.set_owner(user2);
-        PortAndAssignment topo2Pna = new PortAndAssignment(2, topo2Assignment);
+        PortAndAssignment topo2Pna = new PortAndAssignmentImpl(2, topo2Assignment);
         LocalizedResource lrsrc2 = localizer.getBlob(new LocalResource(key2, false, false), topo2Pna, null);
 
         LocalAssignment topo3Assignment = new LocalAssignment(topo3, Collections.emptyList());
         topo3Assignment.set_owner(user3);
-        PortAndAssignment topo3Pna = new PortAndAssignment(3, topo3Assignment);
+        PortAndAssignment topo3Pna = new PortAndAssignmentImpl(3, topo3Assignment);
         LocalizedResource lrsrc3 = localizer.getBlob(new LocalResource(key3, false, false), topo3Pna, null);
 
         // make sure we support different user reading same blob
@@ -794,6 +797,13 @@ public class AsyncLocalizerTest {
         assertTrue("blob not created", keyFile2.exists());
         assertTrue("blob not created", keyFile3.exists());
         assertTrue("blob not created", keyFile1user3.exists());
+
+        //Should assert file size
+        assertEquals("size doesn't match", 34, lrsrc.getSizeOnDisk());
+        assertEquals("size doesn't match", 34, lrsrc2.getSizeOnDisk());
+        assertEquals("size doesn't match", 34, lrsrc3.getSizeOnDisk());
+        //This was 0 byte in test
+        assertEquals("size doesn't match", 34, lrsrc1_user3.getSizeOnDisk());
 
         ConcurrentMap<String, LocalizedResource> lrsrcSet = localizer.getUserFiles().get(user1);
         assertEquals("local resource set size wrong", 1, lrsrcSet.size());
@@ -840,7 +850,7 @@ public class AsyncLocalizerTest {
         assertTrue("failed to create user dir", user1Dir.mkdirs());
         LocalAssignment topo1Assignment = new LocalAssignment(topo1, Collections.emptyList());
         topo1Assignment.set_owner(user1);
-        PortAndAssignment topo1Pna = new PortAndAssignment(1, topo1Assignment);
+        PortAndAssignment topo1Pna = new PortAndAssignmentImpl(1, topo1Assignment);
         LocalizedResource lrsrc = localizer.getBlob(new LocalResource(key1, false, false), topo1Pna, null);
 
         String expectedUserDir = joinPath(baseDir.toString(), USERCACHE, user1);
@@ -862,7 +872,7 @@ public class AsyncLocalizerTest {
 
         LocalAssignment topo2Assignment = new LocalAssignment(topo2, Collections.emptyList());
         topo2Assignment.set_owner(user1);
-        PortAndAssignment topo2Pna = new PortAndAssignment(1, topo2Assignment);
+        PortAndAssignment topo2Pna = new PortAndAssignmentImpl(1, topo2Assignment);
         localizer.getBlob(new LocalResource(key1, false, false), topo2Pna, null);
         assertTrue("blob version file not created", versionFile.exists());
         assertEquals("blob version not correct", 2, LocalizedResource.localVersionOfBlob(keyVersionFile));
@@ -880,10 +890,21 @@ public class AsyncLocalizerTest {
         assertTrue("blob file with version 3 not created", new File(expectedFileDir, key1 + ".3").exists());
     }
 
+    @Test
+    public void validatePNAImplementationsMatch() {
+        LocalAssignment la = new LocalAssignment("Topology1", null);
+        PortAndAssignment pna = new PortAndAssignmentImpl(1, la);
+        PortAndAssignment tpna = new TimePortAndAssignment(pna, new Timer());
+
+        assertTrue(pna.equals(tpna));
+        assertTrue(tpna.equals(pna));
+        assertTrue(pna.hashCode() == tpna.hashCode());
+    }
+
     class TestLocalizer extends AsyncLocalizer {
 
         TestLocalizer(Map<String, Object> conf, String baseDir) throws IOException {
-            super(conf, AdvancedFSOps.make(conf), baseDir);
+            super(conf, AdvancedFSOps.make(conf), baseDir, new StormMetricsRegistry());
         }
 
         @Override
@@ -941,16 +962,20 @@ public class AsyncLocalizerTest {
 
     class TestInputStreamWithMeta extends InputStreamWithMeta {
         private final long version;
+        private final long fileLength;
         private InputStream iostream;
 
         public TestInputStreamWithMeta(long version) {
-            iostream = IOUtils.toInputStream("some test data for my input stream");
+            final String DEFAULT_DATA = "some test data for my input stream";
+            iostream = IOUtils.toInputStream(DEFAULT_DATA);
             this.version = version;
+            this.fileLength = DEFAULT_DATA.length();
         }
 
-        public TestInputStreamWithMeta(InputStream istream, long version) {
+        public TestInputStreamWithMeta(InputStream istream, long version, long fileLength) {
             iostream = istream;
             this.version = version;
+            this.fileLength = fileLength;
         }
 
         @Override
@@ -975,7 +1000,7 @@ public class AsyncLocalizerTest {
 
         @Override
         public long getFileLength() {
-            return 0;
+            return fileLength;
         }
     }
 }

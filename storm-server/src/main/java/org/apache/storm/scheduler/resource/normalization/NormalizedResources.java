@@ -35,16 +35,13 @@ import org.slf4j.LoggerFactory;
 public class NormalizedResources {
 
     private static final Logger LOG = LoggerFactory.getLogger(NormalizedResources.class);
-    public static final Meter numNegativeResourceEvents = StormMetricsRegistry.registerMeter("nimbus:num-negative-resource-events");
-
-
     public static ResourceNameNormalizer RESOURCE_NAME_NORMALIZER;
     private static ResourceMapArrayBridge RESOURCE_MAP_ARRAY_BRIDGE;
 
     static {
         resetResourceNames();
     }
-
+    
     private double cpu;
     private double[] otherResources;
 
@@ -130,14 +127,15 @@ public class NormalizedResources {
      * Remove the other resources from this. This is the same as subtracting the resources in other from this.
      *
      * @param other the resources we want removed.
+     * @param resourceMetrics The resource related metrics
      * @return true if the resources would have gone negative, but were clamped to 0.
      */
-    public boolean remove(NormalizedResources other) {
+    public boolean remove(NormalizedResources other, ResourceMetrics resourceMetrics) {
         boolean ret = false;
         this.cpu -= other.cpu;
         if (cpu < 0.0) {
             ret = true;
-            numNegativeResourceEvents.mark();
+            resourceMetrics.getNegativeResourceEventsMeter().mark();
             cpu = 0.0;
         }
         int otherLength = other.otherResources.length;
@@ -146,8 +144,32 @@ public class NormalizedResources {
             otherResources[i] -= other.otherResources[i];
             if (otherResources[i] < 0.0) {
                 ret = true;
-                numNegativeResourceEvents.mark();
+                resourceMetrics.getNegativeResourceEventsMeter().mark();
                 otherResources[i]  = 0.0;
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * Remove the resources of a worker from this.
+     *
+     * @param value the worker resources that should be removed from this.
+     */
+    public boolean remove(WorkerResources value) {
+        Map<String, Double> workerNormalizedResources = value.get_resources();
+        cpu -= workerNormalizedResources.getOrDefault(Constants.COMMON_CPU_RESOURCE_NAME, 0.0);
+        return remove(RESOURCE_MAP_ARRAY_BRIDGE.translateToResourceArray(workerNormalizedResources)) || cpu < 0;
+    }
+
+    private boolean remove(double[] resourceArray) {
+        boolean ret = false;
+        int otherLength = resourceArray.length;
+        zeroPadOtherResourcesIfNecessary(otherLength);
+        for (int i = 0; i < otherLength; i++) {
+            otherResources[i] -= resourceArray[i];
+            if (otherResources[i] < 0) {
+                ret = true;
             }
         }
         return ret;
@@ -365,5 +387,18 @@ public class NormalizedResources {
         for (int i = 0; i < otherResources.length; i++) {
             otherResources[i] = 0.0;
         }
+    }
+
+    /**
+     * Are any of the resources positive.
+     * @return true of any of the resources are positive.  False if they are all <= 0.
+     */
+    public boolean areAnyOverZero() {
+        for (int i = 0; i < otherResources.length; i++) {
+            if (otherResources[i] > 0) {
+                return true;
+            }
+        }
+        return cpu > 0;
     }
 }

@@ -39,6 +39,7 @@ import org.apache.storm.networktopography.DefaultRackDNSToSwitchMapping;
 import org.apache.storm.scheduler.resource.normalization.NormalizedResourceOffer;
 import org.apache.storm.scheduler.resource.normalization.NormalizedResourceRequest;
 import org.apache.storm.scheduler.resource.normalization.NormalizedResources;
+import org.apache.storm.scheduler.resource.normalization.ResourceMetrics;
 import org.apache.storm.shade.com.google.common.annotations.VisibleForTesting;
 import org.apache.storm.utils.ConfigUtils;
 import org.apache.storm.utils.ObjectReader;
@@ -80,17 +81,19 @@ public class Cluster implements ISchedulingState {
     private final Map<String, Map<WorkerSlot, NormalizedResourceRequest>> nodeToScheduledResourcesCache;
     private final Map<String, Set<WorkerSlot>> nodeToUsedSlotsCache;
     private final Map<String, NormalizedResourceRequest> totalResourcesPerNodeCache = new HashMap<>();
+    private final ResourceMetrics resourceMetrics;
     private SchedulerAssignmentImpl assignment;
     private Set<String> blackListedHosts = new HashSet<>();
     private INimbus inimbus;
 
     public Cluster(
         INimbus nimbus,
+        ResourceMetrics resourceMetrics,
         Map<String, SupervisorDetails> supervisors,
         Map<String, ? extends SchedulerAssignment> map,
         Topologies topologies,
         Map<String, Object> conf) {
-        this(nimbus, supervisors, map, topologies, conf, null, null, null);
+        this(nimbus, resourceMetrics, supervisors, map, topologies, conf, null, null, null);
     }
 
     /**
@@ -99,6 +102,7 @@ public class Cluster implements ISchedulingState {
     public Cluster(Cluster src) {
         this(
             src.inimbus,
+            src.resourceMetrics,
             src.supervisors,
             src.assignments,
             src.topologies,
@@ -118,6 +122,7 @@ public class Cluster implements ISchedulingState {
     public Cluster(Cluster src, Topologies topologies) {
         this(
             src.inimbus,
+            src.resourceMetrics,
             src.supervisors,
             src.assignments,
             topologies,
@@ -129,6 +134,7 @@ public class Cluster implements ISchedulingState {
 
     private Cluster(
         INimbus nimbus,
+        ResourceMetrics resourceMetrics,
         Map<String, SupervisorDetails> supervisors,
         Map<String, ? extends SchedulerAssignment> assignments,
         Topologies topologies,
@@ -137,6 +143,7 @@ public class Cluster implements ISchedulingState {
         Set<String> blackListedHosts,
         Map<String, List<String>> networkTopography) {
         this.inimbus = nimbus;
+        this.resourceMetrics = resourceMetrics;
         this.supervisors.putAll(supervisors);
         this.nodeToScheduledResourcesCache = new HashMap<>(this.supervisors.size());
         this.nodeToUsedSlotsCache = new HashMap<>(this.supervisors.size());
@@ -145,11 +152,7 @@ public class Cluster implements ISchedulingState {
             String nodeId = entry.getKey();
             SupervisorDetails supervisor = entry.getValue();
             String host = supervisor.getHost();
-            List<String> ids = hostToId.get(host);
-            if (ids == null) {
-                ids = new ArrayList<>();
-                hostToId.put(host, ids);
-            }
+            List<String> ids = hostToId.computeIfAbsent(host, k -> new ArrayList<>());
             ids.add(nodeId);
         }
         this.conf = conf;
@@ -173,11 +176,7 @@ public class Cluster implements ISchedulingState {
             for (Map.Entry<String, String> entry : resolvedSuperVisors.entrySet()) {
                 String hostName = entry.getKey();
                 String rack = entry.getValue();
-                List<String> nodesForRack = this.networkTopography.get(rack);
-                if (nodesForRack == null) {
-                    nodesForRack = new ArrayList<>();
-                    this.networkTopography.put(rack, nodesForRack);
-                }
+                List<String> nodesForRack = this.networkTopography.computeIfAbsent(rack, k -> new ArrayList<>());
                 nodesForRack.add(hostName);
             }
         } else {
@@ -383,6 +382,18 @@ public class Cluster implements ISchedulingState {
     }
 
     @Override
+    public List<WorkerSlot> getNonBlacklistedAvailableSlots(List<String> blacklistedSupervisorIds) {
+        List<WorkerSlot> slots = new ArrayList<>();
+        for (SupervisorDetails supervisor : this.supervisors.values()) {
+            if (!isBlackListed(supervisor.getId()) && !blacklistedSupervisorIds.contains(supervisor.getId())) {
+                slots.addAll(getAvailableSlots(supervisor));
+            }
+        }
+
+        return slots;
+    }
+
+    @Override
     public List<WorkerSlot> getAvailableSlots() {
         List<WorkerSlot> slots = new ArrayList<>();
         for (SupervisorDetails supervisor : this.supervisors.values()) {
@@ -454,6 +465,19 @@ public class Cluster implements ISchedulingState {
         Set<WorkerSlot> slots = new HashSet<>();
         slots.addAll(assignment.getExecutorToSlot().values());
         return slots.size();
+    }
+
+    @Override
+    public NormalizedResourceOffer getAvailableResources(SupervisorDetails sd) {
+        NormalizedResourceOffer ret = new NormalizedResourceOffer(sd.getTotalResources());
+        for (SchedulerAssignment assignment: assignments.values()) {
+            for (Entry<WorkerSlot, WorkerResources> entry: assignment.getScheduledResources().entrySet()) {
+                if (sd.getId().equals(entry.getKey().getNodeId())) {
+                   ret.remove(entry.getValue(), getResourceMetrics());
+                }
+            }
+        }
+        return ret;
     }
 
     private void addResource(Map<String, Double> resourceMap, String resourceName, Double valueToBeAdded) {
@@ -790,6 +814,18 @@ public class Cluster implements ISchedulingState {
     }
 
     @Override
+    public NormalizedResourceOffer getNonBlacklistedClusterAvailableResources(Collection<String> blacklistedSupervisorIds) {
+        NormalizedResourceOffer available = new NormalizedResourceOffer();
+        for (SupervisorDetails sup : supervisors.values()) {
+            if (!isBlackListed(sup.getId()) && !blacklistedSupervisorIds.contains(sup.getId())) {
+                available.add(sup.getTotalResources());
+                available.remove(getAllScheduledResourcesForNode(sup.getId()), getResourceMetrics());
+            }
+        }
+        return available;
+    }
+
+    @Override
     public double getClusterTotalCpuResource() {
         double sum = 0.0;
         for (SupervisorDetails sup : supervisors.values()) {
@@ -940,6 +976,10 @@ public class Cluster implements ISchedulingState {
         normalizedResourceRequest.addOffHeap(sharedoffHeapMemory);
         nodeToScheduledResourcesCache.computeIfAbsent(nodeId, MAKE_MAP).put(workerSlot, normalizedResourceRequest);
         nodeToUsedSlotsCache.computeIfAbsent(nodeId, MAKE_SET).add(workerSlot);
+    }
+
+    public ResourceMetrics getResourceMetrics() {
+        return resourceMetrics;
     }
 
     @Override

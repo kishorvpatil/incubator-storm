@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.storm.Config;
-import org.apache.storm.Constants;
-import org.apache.storm.daemon.Acker;
 import org.apache.storm.generated.Bolt;
 import org.apache.storm.generated.ComponentCommon;
 import org.apache.storm.generated.ComponentType;
@@ -337,6 +335,18 @@ public class TopologyDetails {
             return this.resourceList.get(exec);
         }
         return null;
+    }
+
+    /**
+     * Get an approximate total resources needed for this topology.
+     * @return the approximate total resources needed for this topology.
+     */
+    public NormalizedResourceRequest getApproximateTotalResources() {
+        NormalizedResourceRequest ret = new NormalizedResourceRequest();
+        for (NormalizedResourceRequest resources : resourceList.values()) {
+            ret.add(resources);
+        }
+        return ret;
     }
 
     /**

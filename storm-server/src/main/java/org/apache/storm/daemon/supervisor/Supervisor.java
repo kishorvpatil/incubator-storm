@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -70,6 +69,7 @@ import org.apache.storm.utils.ConfigUtils;
 import org.apache.storm.utils.LocalState;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.ServerConfigUtils;
+import org.apache.storm.utils.ShellUtils;
 import org.apache.storm.utils.Time;
 import org.apache.storm.utils.Utils;
 import org.apache.storm.utils.VersionInfo;
@@ -102,6 +102,9 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
     // to really make this work well.
     private final ExecutorService heartbeatExecutor;
     private final AsyncLocalizer asyncLocalizer;
+    private final StormMetricsRegistry metricsRegistry;
+    private final ContainerMemoryTracker containerMemoryTracker;
+    private final SlotMetrics slotMetrics;
     private volatile boolean active;
     private EventManager eventManager;
     private ReadClusterState readState;
@@ -109,9 +112,9 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
     //used for local cluster heartbeating
     private Nimbus.Iface localNimbus;
 
-    private Supervisor(ISupervisor iSupervisor)
+    private Supervisor(ISupervisor iSupervisor, StormMetricsRegistry metricsRegistry)
         throws IOException, IllegalAccessException, InstantiationException, ClassNotFoundException {
-        this(Utils.readStormConfig(), null, iSupervisor);
+        this(ConfigUtils.readStormConfig(), null, iSupervisor, metricsRegistry);
     }
 
     /**
@@ -122,9 +125,12 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
      * @param iSupervisor   {@link ISupervisor}
      * @throws IOException
      */
-    public Supervisor(Map<String, Object> conf, IContext sharedContext, ISupervisor iSupervisor)
+    public Supervisor(Map<String, Object> conf, IContext sharedContext, ISupervisor iSupervisor, StormMetricsRegistry metricsRegistry)
         throws IOException, IllegalAccessException, ClassNotFoundException, InstantiationException {
         this.conf = conf;
+        this.metricsRegistry = metricsRegistry;
+        this.containerMemoryTracker = new ContainerMemoryTracker(metricsRegistry);
+        this.slotMetrics = new SlotMetrics(metricsRegistry);
         this.iSupervisor = iSupervisor;
         this.active = true;
         this.upTime = Utils.makeUptimeComputer();
@@ -135,7 +141,7 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
             (String) conf.get(DaemonConfig.SUPERVISOR_AUTHORIZER), conf);
         if (authorizationHandler == null && conf.get(DaemonConfig.NIMBUS_AUTHORIZER) != null) {
             throw new IllegalStateException("It looks like authorization is turned on for nimbus but not for the "
-                                            + "supervisor....");
+                + "supervisor. ( " + DaemonConfig.SUPERVISOR_AUTHORIZER + " is not set)");
         }
 
         iSupervisor.prepare(conf, ServerConfigUtils.supervisorIsupervisorDir(conf));
@@ -152,7 +158,7 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
 
         try {
             this.localState = ServerConfigUtils.supervisorState(conf);
-            this.asyncLocalizer = new AsyncLocalizer(conf);
+            this.asyncLocalizer = new AsyncLocalizer(conf, metricsRegistry);
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }
@@ -180,8 +186,9 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
      */
     public static void main(String[] args) throws Exception {
         Utils.setupDefaultUncaughtExceptionHandler();
+        StormMetricsRegistry metricsRegistry = new StormMetricsRegistry();
         @SuppressWarnings("resource")
-        Supervisor instance = new Supervisor(new StandaloneSupervisor());
+        Supervisor instance = new Supervisor(new StandaloneSupervisor(), metricsRegistry);
         instance.launchDaemon();
     }
 
@@ -198,6 +205,18 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
 
     IContext getSharedContext() {
         return sharedContext;
+    }
+
+    StormMetricsRegistry getMetricsRegistry() {
+        return metricsRegistry;
+    }
+    
+    ContainerMemoryTracker getContainerMemoryTracker() {
+        return containerMemoryTracker;
+    }
+
+    SlotMetrics getSlotMetrics() {
+        return slotMetrics;
     }
 
     public Map<String, Object> getConf() {
@@ -268,7 +287,7 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
      * Launch the supervisor.
      */
     public void launch() throws Exception {
-        LOG.info("Starting Supervisor with conf {}", conf);
+        LOG.info("Starting Supervisor with conf {}", ConfigUtils.maskPasswords(conf));
         String path = ServerConfigUtils.supervisorTmpDir(conf);
         FileUtils.cleanDirectory(new File(path));
 
@@ -310,10 +329,16 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
                 throw new IllegalArgumentException("Cannot start server in local mode!");
             }
             launch();
-            Utils.addShutdownHookWithForceKillIn1Sec(this::close);
 
-            registerWorkerNumGauge("supervisor:num-slots-used-gauge", conf);
-            StormMetricsRegistry.startMetricsReporters(conf);
+            metricsRegistry.registerGauge("supervisor:num-slots-used-gauge", () -> SupervisorUtils.supervisorWorkerIds(conf).size());
+            //This will only get updated once
+            metricsRegistry.registerMeter("supervisor:num-launched").mark();
+            metricsRegistry.registerMeter("supervisor:num-shell-exceptions", ShellUtils.numShellExceptions);
+            metricsRegistry.startMetricsReporters(conf);
+            Utils.addShutdownHookWithForceKillIn1Sec(() -> {
+                metricsRegistry.stopMetricsReporters();
+                this.close();
+            });
 
             // blocking call under the hood, must invoke after launch cause some services must be initialized
             launchSupervisorThriftServer(conf);
@@ -443,16 +468,6 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
         eventManager.add(syn);
     }
 
-    private void registerWorkerNumGauge(String name, final Map<String, Object> conf) {
-        StormMetricsRegistry.registerGauge(name, new Callable<Integer>() {
-            @Override
-            public Integer call() throws Exception {
-                Collection<String> pids = SupervisorUtils.supervisorWorkerIds(conf);
-                return pids.size();
-            }
-        });
-    }
-
     @Override
     public void close() {
         try {
@@ -498,15 +513,14 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
         }
         for (Killable k : containers) {
             try {
-                k.forceKill();
                 long start = Time.currentTimeMillis();
                 while (!k.areAllProcessesDead()) {
                     if ((Time.currentTimeMillis() - start) > 10_000) {
                         throw new RuntimeException("Giving up on killing " + k
                                                    + " after " + (Time.currentTimeMillis() - start) + " ms");
                     }
-                    Time.sleep(100);
                     k.forceKill();
+                    Time.sleep(100);
                 }
                 k.cleanUp();
             } catch (Exception e) {
@@ -521,7 +535,7 @@ public class Supervisor implements DaemonCommon, AutoCloseable {
         } else {
             try {
                 ContainerLauncher launcher = ContainerLauncher.make(getConf(), getId(), getThriftServerPort(),
-                                                                    getSharedContext());
+                                                                    getSharedContext(), getMetricsRegistry(), getContainerMemoryTracker());
                 killWorkers(SupervisorUtils.supervisorWorkerIds(conf), launcher);
             } catch (Exception e) {
                 throw Utils.wrapInRuntime(e);

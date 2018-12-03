@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.storm.generated.HBMessage;
 import org.apache.storm.generated.HBMessageData;
@@ -34,38 +33,36 @@ import org.apache.storm.utils.VersionInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class Pacemaker implements IServerMessageHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(Pacemaker.class);
-    private final static Meter meterSendPulseCount = StormMetricsRegistry.registerMeter("pacemaker:send-pulse-count");
-    private final static Meter meterTotalReceivedSize = StormMetricsRegistry.registerMeter("pacemaker:total-receive-size");
-    private final static Meter meterGetPulseCount = StormMetricsRegistry.registerMeter("pacemaker:get-pulse=count");
-    private final static Meter meterTotalSentSize = StormMetricsRegistry.registerMeter("pacemaker:total-sent-size");
-    private final static Histogram histogramHeartbeatSize =
-        StormMetricsRegistry.registerHistogram("pacemaker:heartbeat-size", new ExponentiallyDecayingReservoir());
-    private Map<String, byte[]> heartbeats;
-    private Map<String, Object> conf;
+    private final Meter meterSendPulseCount;
+    private final Meter meterTotalReceivedSize;
+    private final Meter meterGetPulseCount;
+    private final Meter meterTotalSentSize;
+    private final Histogram histogramHeartbeatSize;
+    private final Map<String, byte[]> heartbeats;
+    private final Map<String, Object> conf;
 
-
-    public Pacemaker(Map<String, Object> conf) {
-        heartbeats = new ConcurrentHashMap();
+    public Pacemaker(Map<String, Object> conf, StormMetricsRegistry metricsRegistry) {
+        heartbeats = new ConcurrentHashMap<>();
         this.conf = conf;
-        StormMetricsRegistry.registerGauge("pacemaker:size-total-keys",
-                                           new Callable() {
-                                               @Override
-                                               public Integer call() throws Exception {
-                                                   return heartbeats.size();
-                                               }
-                                           });
-        StormMetricsRegistry.startMetricsReporters(conf);
+        this.meterSendPulseCount = metricsRegistry.registerMeter("pacemaker:send-pulse-count");
+        this.meterTotalReceivedSize = metricsRegistry.registerMeter("pacemaker:total-receive-size");
+        this.meterGetPulseCount = metricsRegistry.registerMeter("pacemaker:get-pulse=count");
+        this.meterTotalSentSize = metricsRegistry.registerMeter("pacemaker:total-sent-size");
+        this.histogramHeartbeatSize = metricsRegistry.registerHistogram("pacemaker:heartbeat-size", new ExponentiallyDecayingReservoir());
+        metricsRegistry.registerGauge("pacemaker:size-total-keys", heartbeats::size);
     }
 
     public static void main(String[] args) {
         SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
-        Map<String, Object> conf = ConfigUtils.overrideLoginConfigWithSystemProperty(Utils.readStormConfig());
-        final Pacemaker serverHandler = new Pacemaker(conf);
+        Map<String, Object> conf = ConfigUtils.overrideLoginConfigWithSystemProperty(ConfigUtils.readStormConfig());
+        StormMetricsRegistry metricsRegistry = new StormMetricsRegistry();
+        final Pacemaker serverHandler = new Pacemaker(conf, metricsRegistry);
         serverHandler.launchServer();
+        metricsRegistry.startMetricsReporters(conf);
+        Utils.addShutdownHookWithForceKillIn1Sec(metricsRegistry::stopMetricsReporters);
     }
 
     @Override

@@ -12,6 +12,8 @@
 
 package org.apache.storm.localizer;
 
+import com.codahale.metrics.Histogram;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -23,12 +25,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+
 import org.apache.storm.blobstore.ClientBlobStore;
 import org.apache.storm.blobstore.InputStreamWithMeta;
-import org.apache.storm.daemon.supervisor.IAdvancedFSOps;
 import org.apache.storm.generated.AuthorizationException;
 import org.apache.storm.generated.KeyNotFoundException;
+import org.apache.storm.metric.StormMetricsRegistry;
 import org.apache.storm.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,68 +50,71 @@ public abstract class LocallyCachedBlob {
     private long lastUsed = Time.currentTimeMillis();
     private CompletableFuture<Void> doneUpdating = null;
 
+    private final Histogram fetchingRate;
+
     /**
      * Create a new LocallyCachedBlob.
      *
      * @param blobDescription a description of the blob this represents.  Typically it should at least be the blob key, but ideally also
      *     include if it is an archive or not, what user or topology it is for, or if it is a storm.jar etc.
      */
-    protected LocallyCachedBlob(String blobDescription, String blobKey) {
+    protected LocallyCachedBlob(String blobDescription, String blobKey, StormMetricsRegistry metricsRegistry) {
         this.blobDescription = blobDescription;
         this.blobKey = blobKey;
-    }
-
-    protected static long downloadToTempLocation(ClientBlobStore store, String key, long currentVersion, IAdvancedFSOps fsOps,
-                                                 Function<Long, Path> getTempPath)
-        throws KeyNotFoundException, AuthorizationException, IOException {
-        try (InputStreamWithMeta in = store.getBlob(key)) {
-            long newVersion = in.getVersion();
-            if (newVersion == currentVersion) {
-                LOG.warn("The version did not change, but going to download again {} {}", currentVersion, key);
-            }
-            Path tmpLocation = getTempPath.apply(newVersion);
-            long totalRead = 0;
-            //Make sure the parent directory is there and ready to go
-            fsOps.forceMkdir(tmpLocation.getParent());
-            try (OutputStream outStream = fsOps.getOutputStream(tmpLocation.toFile())) {
-                byte[] buffer = new byte[4096];
-                int read = 0;
-                while ((read = in.read(buffer)) > 0) {
-                    outStream.write(buffer, 0, read);
-                    totalRead += read;
-                }
-            }
-            long expectedSize = in.getFileLength();
-            if (totalRead != expectedSize) {
-                throw new IOException("We expected to download " + expectedSize + " bytes but found we got " + totalRead);
-            }
-
-            return newVersion;
-        }
+        this.fetchingRate = metricsRegistry.registerHistogram("supervisor:blob-fetching-rate-MB/s");
     }
 
     /**
-     * Get the size of p in bytes.
-     * @param p the path to read.
-     * @return the size of p in bytes.
+     * Helper function to download blob from blob store.
+     * @param store Blob store to fetch blobs from
+     * @param key Key to retrieve blobs
+     * @param pathSupplier A function that supplies the download destination of a blob. It guarantees the validity
+     *                     of path or throws {@link IOException}
+     * @param outStreamSupplier A function that supplies the {@link OutputStream} object
+     * @return The metadata of the download session, including blob's version and download destination
+     * @throws KeyNotFoundException Thrown if key to retrieve blob is invalid
+     * @throws AuthorizationException Thrown if the retrieval is not under security authorization
+     * @throws IOException Thrown if any IO error occurs
      */
-    protected static long getSizeOnDisk(Path p) throws IOException {
-        if (!Files.exists(p)) {
-            return 0;
-        } else if (Files.isRegularFile(p)) {
-            return Files.size(p);
-        } else {
-            //We will not follow sym links
-            return Files.walk(p)
-                        .filter((subp) -> Files.isRegularFile(subp, LinkOption.NOFOLLOW_LINKS))
-                        .mapToLong((subp) -> {
-                            try {
-                                return Files.size(subp);
-                            } catch (IOException e) {
-                                LOG.warn("Could not get the size of ");
-                            }
-                            return 0;
-                        }).sum();
+    protected DownloadMeta fetch(ClientBlobStore store, String key,
+                                 IOFunction<Long, Path> pathSupplier,
+                                 IOFunction<File, OutputStream> outStreamSupplier)
+            throws KeyNotFoundException, AuthorizationException, IOException {
+
+        try (InputStreamWithMeta in = store.getBlob(key)) {
+            long newVersion = in.getVersion();
+            long currentVersion = getLocalVersion();
+            if (newVersion == currentVersion) {
+                LOG.warn("The version did not change, but going to download again {} {}", currentVersion, key);
+            }
+
+            //Make sure the parent directory is there and ready to go
+            Path downloadPath = pathSupplier.apply(newVersion);
+            LOG.debug("Downloading {} to {}", key, downloadPath);
+
+            long duration;
+            long totalRead = 0;
+            try (OutputStream out = outStreamSupplier.apply(downloadPath.toFile())) {
+                long startTime = Time.nanoTime();
+
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = in.read(buffer)) >= 0) {
+                    out.write(buffer, 0, read);
+                    totalRead += read;
+                }
+
+                duration = Time.nanoTime() - startTime;
+            }
+
+            long expectedSize = in.getFileLength();
+            if (totalRead != expectedSize) {
+                throw new IOException("We expected to download " + expectedSize + " bytes but found we got " + totalRead);
+            } else {
+                double downloadRate = ((double) totalRead * 1e3) / duration;
+                fetchingRate.update(Math.round(downloadRate));
+            }
+            return new DownloadMeta(downloadPath, newVersion);
         }
     }
 
@@ -131,7 +136,7 @@ public abstract class LocallyCachedBlob {
      * @param store the store to us to download the data.
      * @return the version that was downloaded.
      */
-    public abstract long downloadToTempLocation(ClientBlobStore store) throws IOException, KeyNotFoundException, AuthorizationException;
+    public abstract long fetchUnzipToTemp(ClientBlobStore store) throws IOException, KeyNotFoundException, AuthorizationException;
 
     /**
      * Commit the new version and make it available for the end user.
@@ -163,6 +168,31 @@ public abstract class LocallyCachedBlob {
     public abstract long getSizeOnDisk();
 
     /**
+     * Get the size of p in bytes.
+     * @param p the path to read.
+     * @return the size of p in bytes.
+     */
+    protected static long getSizeOnDisk(Path p) throws IOException {
+        if (!Files.exists(p)) {
+            return 0;
+        } else if (Files.isRegularFile(p)) {
+            return Files.size(p);
+        } else {
+            //We will not follow sym links
+            return Files.walk(p)
+                    .filter((subp) -> Files.isRegularFile(subp, LinkOption.NOFOLLOW_LINKS))
+                    .mapToLong((subp) -> {
+                        try {
+                            return Files.size(subp);
+                        } catch (IOException e) {
+                            LOG.warn("Could not get the size of {}", subp);
+                        }
+                        return 0;
+                    }).sum();
+        }
+    }
+
+    /**
      * Updates the last updated time.  This should be called when references are added or removed.
      */
     protected synchronized void touch() {
@@ -190,6 +220,7 @@ public abstract class LocallyCachedBlob {
      * @param cb an optional callback indicating that they want to know/synchronize when a blob is updated.
      */
     public synchronized void addReference(final PortAndAssignment pna, BlobChangingCallback cb) {
+        LOG.debug("Adding reference {}", pna);
         if (cb == null) {
             cb = NOOP_CB;
         }
@@ -203,6 +234,7 @@ public abstract class LocallyCachedBlob {
      * @param pna the slot + assignment that no longer needs this blob.
      */
     public synchronized void removeReference(final PortAndAssignment pna) {
+        LOG.debug("Removing reference {}", pna);
         if (references.remove(pna) == null) {
             LOG.warn("{} had no reservation for {}", pna, blobDescription);
         }
@@ -254,4 +286,23 @@ public abstract class LocallyCachedBlob {
     }
 
     public abstract boolean isFullyDownloaded();
+
+    static class DownloadMeta {
+        private final Path downloadPath;
+        private final long version;
+
+        public DownloadMeta(Path downloadPath, long version) {
+            this.downloadPath = downloadPath;
+            this.version = version;
+        }
+
+        public Path getDownloadPath() {
+            return downloadPath;
+        }
+
+        public long getVersion() {
+            return version;
+        }
+    }
+
 }

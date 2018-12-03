@@ -62,7 +62,7 @@ public class ConfigValidation {
         validateField(fieldName, conf, getConfigClasses());
     }
 
-    private static synchronized List<Class<?>> getConfigClasses() {
+    public static synchronized List<Class<?>> getConfigClasses() {
         if (configClasses == null) {
             List<Class<?>> ret = new ArrayList<>();
             Set<String> classesToScan = new HashSet<>();
@@ -168,6 +168,14 @@ public class ConfigValidation {
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Validate topology conf.
+     * @param topoConf The topology conf.
+     */
+    public static void validateTopoConf(Map<String, Object> topoConf) {
+        validateFields(topoConf, Arrays.asList(Config.class));
     }
 
     /**

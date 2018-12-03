@@ -19,6 +19,7 @@
 package org.apache.storm;
 
 import com.esotericsoftware.kryo.Serializer;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import org.apache.storm.metric.IEventLogger;
 import org.apache.storm.policy.IWaitStrategy;
 import org.apache.storm.serialization.IKryoDecorator;
 import org.apache.storm.serialization.IKryoFactory;
+import org.apache.storm.utils.Utils;
 import org.apache.storm.validation.ConfigValidation;
 import org.apache.storm.validation.ConfigValidation.EventLoggerRegistryValidator;
 import org.apache.storm.validation.ConfigValidation.ListOfListOfStringValidator;
@@ -36,6 +38,7 @@ import org.apache.storm.validation.ConfigValidation.MetricRegistryValidator;
 import org.apache.storm.validation.ConfigValidation.MetricReportersValidator;
 import org.apache.storm.validation.ConfigValidationAnnotations.CustomValidator;
 import org.apache.storm.validation.ConfigValidationAnnotations.NotNull;
+import org.apache.storm.validation.ConfigValidationAnnotations.Password;
 import org.apache.storm.validation.ConfigValidationAnnotations.isBoolean;
 import org.apache.storm.validation.ConfigValidationAnnotations.isImplementationOfClass;
 import org.apache.storm.validation.ConfigValidationAnnotations.isInteger;
@@ -705,6 +708,16 @@ public class Config extends HashMap<String, Object> {
     @isString(acceptedValues = { "S0", "S1", "S2", "S3" })
     public static final String TOPOLOGY_LOGGING_SENSITIVITY = "topology.logging.sensitivity";
     /**
+     * Log file the user can use to configure Log4j2.
+     * Can be a resource in the jar (specified with classpath:/path/to/resource) or a file.
+     * This configuration is applied in addition to the regular worker log4j2 configuration.
+     * The configs are merged according to the rules here:
+     *   https://logging.apache.org/log4j/2.x/manual/configuration.html#CompositeConfiguration
+     */
+    @isString
+    public static final String TOPOLOGY_LOGGING_CONFIG_FILE = "topology.logging.config";
+
+    /**
      * Sets the priority for a topology
      */
     @isInteger
@@ -1070,11 +1083,7 @@ public class Config extends HashMap<String, Object> {
      */
     @isString
     public static final String CLIENT_BLOBSTORE = "client.blobstore.class";
-    /**
-     * The blobstore super user has all read/write/admin permissions to all blobs - user running the blobstore.
-     */
-    @isString
-    public static final String BLOBSTORE_SUPERUSER = "blobstore.superuser";
+
     /**
      * What directory to use for the blobstore. The directory is expected to be an absolute path when using HDFS blobstore, for
      * LocalFsBlobStore it could be either absolute or relative. If the setting is a relative directory, it is relative to root directory of
@@ -1090,6 +1099,9 @@ public class Config extends HashMap<String, Object> {
     public static final String BLOBSTORE_CLEANUP_ENABLE = "blobstore.cleanup.enable";
     /**
      * principal for nimbus/supervisor to use to access secure hdfs for the blobstore.
+     * The format is generally "primary/instance@REALM", where "instance" field is optional.
+     * If the instance field of the principal is the string "_HOST", it will
+     + be replaced with the host name of the server the daemon is running on (by calling {@link #getBlobstoreHDFSPrincipal(Map conf)} method).
      */
     @isString
     public static final String BLOBSTORE_HDFS_PRINCIPAL = "blobstore.hdfs.principal";
@@ -1114,13 +1126,6 @@ public class Config extends HashMap<String, Object> {
      */
     @isString
     public static final String STORM_LOCAL_HOSTNAME = "storm.local.hostname";
-    /**
-     * The host that the master server is running on, added only for backward compatibility, the usage deprecated in favor of nimbus.seeds
-     * config.
-     */
-    @Deprecated
-    @isString
-    public static final String NIMBUS_HOST = "nimbus.host";
     /**
      * List of seed nimbus hosts to use for leader nimbus discovery.
      */
@@ -1153,6 +1158,7 @@ public class Config extends HashMap<String, Object> {
      * authentication.
      */
     @isString
+    @Password
     public static final String STORM_ZOOKEEPER_TOPOLOGY_AUTH_PAYLOAD = "storm.zookeeper.topology.auth.payload";
     /**
      * The cluster Zookeeper authentication scheme to use, e.g. "digest". Defaults to no authentication.
@@ -1308,14 +1314,6 @@ public class Config extends HashMap<String, Object> {
      */
     @isInteger
     public static final String STORM_NETTY_MESSAGE_BATCH_SIZE = "storm.messaging.netty.transfer.batch.size";
-    /**
-     * Netty based messaging: The max # of retries that a peer will perform when a remote is not accessible
-     *
-     * @deprecated "Since netty clients should never stop reconnecting - this does not make sense anymore.
-     */
-    @Deprecated
-    @isInteger
-    public static final String STORM_MESSAGING_NETTY_MAX_RETRIES = "storm.messaging.netty.max_retries";
     /**
      * Netty based messaging: The min # of milliseconds that a peer will wait.
      */
@@ -1899,4 +1897,16 @@ public class Config extends HashMap<String, Object> {
         this.put(Config.TOPOLOGY_SCHEDULER_STRATEGY, strategy);
     }
 
+    private static final String HOSTNAME_PATTERN = "_HOST";
+
+    public static String getBlobstoreHDFSPrincipal(Map conf) throws UnknownHostException {
+        String principal = (String) conf.get(Config.BLOBSTORE_HDFS_PRINCIPAL);
+        if (principal != null) {
+            String[] components = principal.split("[/@]");
+            if (components.length == 3 && components[1].equals(HOSTNAME_PATTERN)) {
+                principal = components[0] + "/" + Utils.localHostname() + "@" + components[2];
+            }
+        }
+        return principal;
+    }
 }

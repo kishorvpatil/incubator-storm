@@ -46,7 +46,7 @@ public class TupleImpl implements Tuple {
     }
 
     public TupleImpl(GeneralTopologyContext context, List<Object> values, String srcComponent, int taskId, String streamId, MessageId id) {
-        this.values = Collections.unmodifiableList(values);
+        this.values = context.doSanityCheck() ? Collections.unmodifiableList(values) : values;
         this.taskId = taskId;
         this.streamId = streamId;
         this.id = id;
@@ -222,11 +222,6 @@ public class TupleImpl implements Tuple {
     @Override
     public List<Object> select(Fields selector) {
         return getFields().select(selector, values);
-    }
-
-    @Override
-    public GlobalStreamId getSourceGlobalStreamid() {
-        return getSourceGlobalStreamId();
     }
 
     @Override

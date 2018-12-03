@@ -31,7 +31,7 @@ the layout and configuration of your topologies.
    in your topology code
  * Support for existing topology code (see below)
  * Define Storm Core API (Spouts/Bolts) using a flexible YAML DSL
- * YAML DSL support for most Storm components (storm-kafka, storm-hdfs, storm-hbase, etc.)
+ * YAML DSL support for most Storm components (storm-kafka-client, storm-hdfs, storm-hbase, etc.)
  * Convenient support for multi-lang components
  * External property substitution/filtering for easily switching between configurations/environments (similar to Maven-style
    `${variable.name}` substitution)
@@ -479,7 +479,7 @@ well.
 ### Using Java `enum`s in Contructor Arguments, References, Properties and Configuration Methods
 You can easily use Java `enum` values as arguments in a Flux YAML file, simply by referencing the name of the `enum`.
 
-For example, [Storm's HDFS module]() includes the following `enum` definition (simplified for brevity):
+For example, [Storm's HDFS module](storm-hdfs.html) includes the following `enum` definition (simplified for brevity):
 
 ```java
 public static enum Units {

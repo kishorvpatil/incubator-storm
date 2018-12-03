@@ -64,6 +64,13 @@ public class HiveState implements State {
 
     @Override
     public void commit(Long txId) {
+        try {
+            flushAllWriters();
+            currentBatchSize = 0;
+        } catch (HiveWriter.TxnFailure | InterruptedException | HiveWriter.CommitFailure | HiveWriter.TxnBatchFailure ex) {
+            LOG.warn("Commit failed. Failing the batch.", ex);
+            throw new FailedException(ex);
+        }
     }
 
     public void prepare(Map<String, Object> conf, IMetricsContext metrics, int partitionIndex, int numPartitions) {
@@ -80,7 +87,7 @@ public class HiveState implements State {
             String timeoutName = "hive-bolt-%d";
             this.callTimeoutPool = Executors.newFixedThreadPool(1,
                                                                 new ThreadFactoryBuilder().setNameFormat(timeoutName).build());
-            heartBeatTimer = new Timer();
+            heartBeatTimer = new Timer("hive-hb-timer", true);
             setupHeartBeatTimer();
         } catch (Exception e) {
             LOG.warn("unable to make connection to hive ", e);
@@ -289,6 +296,7 @@ public class HiveState implements State {
                 LOG.warn("shutdown interrupted on " + execService, ex);
             }
         }
+        heartBeatTimer.cancel();
         callTimeoutPool = null;
     }
 

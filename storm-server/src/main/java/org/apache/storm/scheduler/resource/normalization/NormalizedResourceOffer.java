@@ -20,6 +20,7 @@ package org.apache.storm.scheduler.resource.normalization;
 
 import java.util.Map;
 import org.apache.storm.Constants;
+import org.apache.storm.generated.WorkerResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,14 +84,32 @@ public class NormalizedResourceOffer implements NormalizedResourcesWithMemory {
     /**
      * Remove the resources in other from this.
      * @param other the resources to be removed.
+     * @param resourceMetrics The resource related metrics
      * @return true if one or more resources in other were larger than available resources in this, else false.
      */
-    public boolean remove(NormalizedResourcesWithMemory other) {
-        boolean negativeResources = normalizedResources.remove(other.getNormalizedResources());
+    public boolean remove(NormalizedResourcesWithMemory other, ResourceMetrics resourceMetrics) {
+        boolean negativeResources = normalizedResources.remove(other.getNormalizedResources(), resourceMetrics);
         totalMemoryMb -= other.getTotalMemoryMb();
         if (totalMemoryMb < 0.0) {
             negativeResources = true;
-            NormalizedResources.numNegativeResourceEvents.mark();
+            resourceMetrics.getNegativeResourceEventsMeter().mark();
+            totalMemoryMb = 0.0;
+        }
+        return negativeResources;
+    }
+
+    /**
+     * Remove the resources in other from this.
+     * @param other the resources to be removed.
+     * @param resourceMetrics The resource related metrics
+     * @return true if one or more resources in other were larger than available resources in this, else false.
+     */
+    public boolean remove(WorkerResources other, ResourceMetrics resourceMetrics) {
+        boolean negativeResources = normalizedResources.remove(other);
+        totalMemoryMb -= (other.get_mem_off_heap() + other.get_mem_on_heap());
+        if (totalMemoryMb < 0.0) {
+            negativeResources = true;
+            resourceMetrics.getNegativeResourceEventsMeter().mark();
             totalMemoryMb = 0.0;
         }
         return negativeResources;
@@ -152,5 +171,10 @@ public class NormalizedResourceOffer implements NormalizedResourcesWithMemory {
     public void clear() {
         this.totalMemoryMb = 0.0;
         this.normalizedResources.clear();
+    }
+
+    @Override
+    public boolean areAnyOverZero() {
+        return totalMemoryMb > 0 || normalizedResources.areAnyOverZero();
     }
 }

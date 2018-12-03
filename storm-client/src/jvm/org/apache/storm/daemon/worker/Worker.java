@@ -55,7 +55,7 @@ import org.apache.storm.shade.com.google.common.base.Preconditions;
 import org.apache.storm.shade.org.apache.commons.io.FileUtils;
 import org.apache.storm.shade.org.apache.commons.lang.ObjectUtils;
 import org.apache.storm.shade.uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
-import org.apache.storm.stats.StatsUtil;
+import org.apache.storm.stats.ClientStatsUtil;
 import org.apache.storm.utils.ConfigUtils;
 import org.apache.storm.utils.LocalState;
 import org.apache.storm.utils.NimbusClient;
@@ -121,7 +121,7 @@ public class Worker implements Shutdownable, DaemonCommon {
         String supervisorPort = args[2];
         String portStr = args[3];
         String workerId = args[4];
-        Map<String, Object> conf = Utils.readStormConfig();
+        Map<String, Object> conf = ConfigUtils.readStormConfig();
         Utils.setupDefaultUncaughtExceptionHandler();
         StormCommon.validateDistributedMode(conf);
         Worker worker = new Worker(conf, null, stormId, assignmentId, Integer.parseInt(supervisorPort),
@@ -132,7 +132,7 @@ public class Worker implements Shutdownable, DaemonCommon {
 
     public void start() throws Exception {
         LOG.info("Launching worker for {} on {}:{} with id {} and conf {}", topologyId, assignmentId, port, workerId,
-                 conf);
+                 ConfigUtils.maskPasswords(conf));
         // because in local mode, its not a separate
         // process. supervisor will register it in this case
         // if ConfigUtils.isLocalMode(conf) returns false then it is in distributed mode.
@@ -278,7 +278,7 @@ public class Worker implements Shutdownable, DaemonCommon {
         setupFlushTupleTimer(topologyConf, newExecutors);
         setupBackPressureCheckTimer(topologyConf);
 
-        LOG.info("Worker has topology config {}", Utils.redactValue(topologyConf, Config.STORM_ZOOKEEPER_TOPOLOGY_AUTH_PAYLOAD));
+        LOG.info("Worker has topology config {}", ConfigUtils.maskPasswords(topologyConf));
         LOG.info("Worker {} for storm {} on {}:{}  has finished loading", workerId, topologyId, assignmentId, port);
         return this;
     }
@@ -346,17 +346,17 @@ public class Worker implements Shutdownable, DaemonCommon {
         Map<List<Integer>, ExecutorStats> stats;
         List<IRunningExecutor> executors = this.executorsAtom.get();
         if (null == executors) {
-            stats = StatsUtil.mkEmptyExecutorZkHbs(workerState.localExecutors);
+            stats = ClientStatsUtil.mkEmptyExecutorZkHbs(workerState.localExecutors);
         } else {
-            stats = StatsUtil.convertExecutorZkHbs(executors.stream().collect(Collectors
+            stats = ClientStatsUtil.convertExecutorZkHbs(executors.stream().collect(Collectors
                                                                                   .toMap(IRunningExecutor::getExecutorId,
                                                                                          IRunningExecutor::renderStats)));
         }
-        Map<String, Object> zkHB = StatsUtil.mkZkWorkerHb(workerState.topologyId, stats, workerState.uptime.upTime());
+        Map<String, Object> zkHB = ClientStatsUtil.mkZkWorkerHb(workerState.topologyId, stats, workerState.uptime.upTime());
         try {
             workerState.stormClusterState
                 .workerHeartbeat(workerState.topologyId, workerState.assignmentId, (long) workerState.port,
-                                 StatsUtil.thriftifyZkWorkerHb(zkHB));
+                                 ClientStatsUtil.thriftifyZkWorkerHb(zkHB));
         } catch (Exception ex) {
             LOG.error("Worker failed to write heartbeats to ZK or Pacemaker...will retry", ex);
         }

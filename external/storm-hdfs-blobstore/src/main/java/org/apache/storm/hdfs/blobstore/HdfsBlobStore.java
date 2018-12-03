@@ -137,7 +137,7 @@ public class HdfsBlobStore extends BlobStore {
         try {
             // if a HDFS keytab/principal have been supplied login, otherwise assume they are
             // logged in already or running insecure HDFS.
-            String principal = (String) conf.get(Config.BLOBSTORE_HDFS_PRINCIPAL);
+            String principal = Config.getBlobstoreHDFSPrincipal(conf);
             String keyTab = (String) conf.get(Config.BLOBSTORE_HDFS_KEYTAB);
 
             if (principal != null && keyTab != null) {
@@ -162,7 +162,7 @@ public class HdfsBlobStore extends BlobStore {
                 localSubject = getHadoopUser();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error logging in from keytab!", e);
+            throw new RuntimeException("Error logging in from keytab: " + e.getMessage(), e);
         }
         aclHandler = new BlobStoreAclHandler(conf);
         Path baseDir = new Path(overrideBase, BASE_BLOBS_DIR_NAME);

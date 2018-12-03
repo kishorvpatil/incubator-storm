@@ -43,7 +43,7 @@ public class NormalizedResourceRequest implements NormalizedResourcesWithMemory 
     private double offHeap;
 
     private NormalizedResourceRequest(Map<String, ? extends Number> resources,
-                                      Map<String, Double> defaultResources) {
+        Map<String, Double> defaultResources) {
         if (resources == null && defaultResources == null) {
             onHeap = 0.0;
             offHeap = 0.0;
@@ -241,5 +241,10 @@ public class NormalizedResourceRequest implements NormalizedResourcesWithMemory 
         normalizedResources.clear();
         offHeap = 0.0;
         onHeap = 0.0;
+    }
+
+    @Override
+    public boolean areAnyOverZero() {
+        return onHeap > 0 || offHeap > 0 || normalizedResources.areAnyOverZero();
     }
 }

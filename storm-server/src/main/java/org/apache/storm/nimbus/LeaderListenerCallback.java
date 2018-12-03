@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.security.auth.Subject;
+
+import com.codahale.metrics.Meter;
 import org.apache.commons.io.IOUtils;
 import org.apache.storm.Config;
 import org.apache.storm.blobstore.BlobStore;
@@ -29,6 +31,7 @@ import org.apache.storm.daemon.nimbus.TopoCache;
 import org.apache.storm.generated.AuthorizationException;
 import org.apache.storm.generated.KeyNotFoundException;
 import org.apache.storm.generated.StormTopology;
+import org.apache.storm.metric.StormMetricsRegistry;
 import org.apache.storm.security.auth.ReqContext;
 import org.apache.storm.shade.com.google.common.base.Joiner;
 import org.apache.storm.shade.com.google.common.collect.Sets;
@@ -49,6 +52,10 @@ public class LeaderListenerCallback {
     private static final String STORM_JAR_SUFFIX = "-stormjar.jar";
     private static final String STORM_CODE_SUFFIX = "-stormcode.ser";
     private static final String STORM_CONF_SUFFIX = "-stormconf.ser";
+    
+    private final Meter numGainedLeader;
+    private final Meter numLostLeader;
+    
     private final BlobStore blobStore;
     private final TopoCache tc;
     private final IStormClusterState clusterState;
@@ -68,7 +75,7 @@ public class LeaderListenerCallback {
      * @param acls zookeeper acls
      */
     public LeaderListenerCallback(Map conf, CuratorFramework zk, LeaderLatch leaderLatch, BlobStore blobStore,
-                                  TopoCache tc, IStormClusterState clusterState, List<ACL> acls) {
+                                  TopoCache tc, IStormClusterState clusterState, List<ACL> acls, StormMetricsRegistry metricsRegistry) {
         this.blobStore = blobStore;
         this.tc = tc;
         this.clusterState = clusterState;
@@ -76,12 +83,15 @@ public class LeaderListenerCallback {
         this.leaderLatch = leaderLatch;
         this.conf = conf;
         this.acls = acls;
+        this.numGainedLeader = metricsRegistry.registerMeter("nimbus:num-gained-leadership");
+        this.numLostLeader = metricsRegistry.registerMeter("nimbus:num-lost-leadership");
     }
 
     /**
      * Invoke when gains leadership.
      */
     public void leaderCallBack() {
+        numGainedLeader.mark();
         //set up nimbus-info to zk
         setUpNimbusInfo(acls);
         //sync zk assignments/id-info to local
@@ -131,6 +141,7 @@ public class LeaderListenerCallback {
      * Invoke when lost leadership.
      */
     public void notLeaderCallback() {
+        numLostLeader.mark();
         tc.clear();
     }
 

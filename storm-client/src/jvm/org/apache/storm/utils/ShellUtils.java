@@ -12,6 +12,7 @@
 
 package org.apache.storm.utils;
 
+import com.codahale.metrics.Meter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +26,6 @@ import org.apache.storm.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 abstract public class ShellUtils {
     public static final Logger LOG = LoggerFactory.getLogger(ShellUtils.class);
     public static final OSType osType = getOSType();
@@ -36,8 +36,12 @@ abstract public class ShellUtils {
     public static final boolean FREEBSD = (osType == OSType.OS_TYPE_FREEBSD);
     public static final boolean LINUX = (osType == OSType.OS_TYPE_LINUX);
     public static final boolean OTHER = (osType == OSType.OS_TYPE_OTHER);
+
+    //Meter declared here can be registered by any daemon, and is currently used by Supervisor
+    public static final Meter numShellExceptions = new Meter();
+
     /**
-     * Token separator regex used to parse Shell tool outputs
+     * Token separator regex used to parse Shell tool outputs.
      */
     public static final String TOKEN_SEPARATOR_REGEX
         = WINDOWS ? "[|\n\r]" : "[ \t\n\r\f]";
@@ -186,7 +190,12 @@ abstract public class ShellUtils {
             return;
         }
         exitCode = 0; // reset for next run
-        runCommand();
+        try {
+            runCommand();
+        } catch (IOException e) {
+            numShellExceptions.mark();
+            throw e;
+        }
     }
 
     /**

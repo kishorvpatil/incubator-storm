@@ -68,6 +68,7 @@ public class ReadClusterState implements Runnable, AutoCloseable {
     private final LocalState localState;
     private final AtomicReference<Map<Long, LocalAssignment>> cachedAssignments;
     private final OnlyLatestExecutor<Integer> metricsExec;
+    private final SlotMetrics slotMetrics;
     private WorkerMetricsProcessor metricsProcessor;
 
     public ReadClusterState(Supervisor supervisor) throws Exception {
@@ -81,8 +82,10 @@ public class ReadClusterState implements Runnable, AutoCloseable {
         this.localState = supervisor.getLocalState();
         this.cachedAssignments = supervisor.getCurrAssignment();
         this.metricsExec = new OnlyLatestExecutor<>(supervisor.getHeartbeatExecutor());
+        this.slotMetrics = supervisor.getSlotMetrics();
 
-        this.launcher = ContainerLauncher.make(superConf, assignmentId, supervisorPort, supervisor.getSharedContext());
+        this.launcher = ContainerLauncher.make(superConf, assignmentId, supervisorPort,
+            supervisor.getSharedContext(), supervisor.getMetricsRegistry(), supervisor.getContainerMemoryTracker());
 
         this.metricsProcessor = null;
         try {
@@ -99,15 +102,16 @@ public class ReadClusterState implements Runnable, AutoCloseable {
         }
 
         try {
-            Collection<String> workers = SupervisorUtils.supervisorWorkerIds(superConf);
+            Collection<String> detachedRunningWorkers = SupervisorUtils.supervisorWorkerIds(superConf);
             for (Slot slot : slots.values()) {
                 String workerId = slot.getWorkerId();
+                // We ignore workers that are still bound to a slot, which is monitored by a supervisor
                 if (workerId != null) {
-                    workers.remove(workerId);
+                    detachedRunningWorkers.remove(workerId);
                 }
             }
-            if (!workers.isEmpty()) {
-                supervisor.killWorkers(workers, launcher);
+            if (!detachedRunningWorkers.isEmpty()) {
+                supervisor.killWorkers(detachedRunningWorkers, launcher);
             }
         } catch (Exception e) {
             LOG.warn("Error trying to clean up old workers", e);
@@ -120,7 +124,7 @@ public class ReadClusterState implements Runnable, AutoCloseable {
 
     private Slot mkSlot(int port) throws Exception {
         return new Slot(localizer, superConf, launcher, host, port,
-                        localState, stormClusterState, iSuper, cachedAssignments, metricsExec, metricsProcessor);
+                        localState, stormClusterState, iSuper, cachedAssignments, metricsExec, metricsProcessor, slotMetrics);
     }
 
     @Override

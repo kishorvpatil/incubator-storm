@@ -33,6 +33,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.URL;
@@ -81,7 +82,7 @@ import org.apache.storm.generated.StormTopology;
 import org.apache.storm.generated.TopologyInfo;
 import org.apache.storm.generated.TopologySummary;
 import org.apache.storm.security.auth.ReqContext;
-import org.apache.storm.serialization.DefaultSerializationDelegate;
+import org.apache.storm.serialization.GzipThriftSerializationDelegate;
 import org.apache.storm.serialization.SerializationDelegate;
 import org.apache.storm.shade.com.google.common.annotations.VisibleForTesting;
 import org.apache.storm.shade.com.google.common.collect.Lists;
@@ -300,21 +301,25 @@ public class Utils {
      * runtime to avoid any zombie process in case cleanup function hangs.
      */
     public static void addShutdownHookWithDelayedForceKill(Runnable func, int numSecs) {
-        Runnable sleepKill = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    LOG.info("Halting after {} seconds", numSecs);
-                    Time.sleepSecs(numSecs);
-                    LOG.warn("Forcing Halt...");
-                    Runtime.getRuntime().halt(20);
-                } catch (Exception e) {
-                    LOG.warn("Exception in the ShutDownHook", e);
-                }
+        final Thread sleepKill = new Thread(() -> {
+            try {
+                LOG.info("Halting after {} seconds", numSecs);
+                Time.sleepSecs(numSecs);
+                LOG.warn("Forcing Halt... {}", Utils.threadDump());
+                Runtime.getRuntime().halt(20);
+            } catch (InterruptedException ie) {
+                //Ignored/expected...
+            } catch (Exception e) {
+                LOG.warn("Exception in the ShutDownHook", e);
             }
-        };
-        Runtime.getRuntime().addShutdownHook(new Thread(func));
-        Runtime.getRuntime().addShutdownHook(new Thread(sleepKill));
+        });
+        sleepKill.setDaemon(true);
+        Thread wrappedFunc = new Thread(() -> {
+            func.run();
+            sleepKill.interrupt();
+        });
+        Runtime.getRuntime().addShutdownHook(wrappedFunc);
+        Runtime.getRuntime().addShutdownHook(sleepKill);
     }
 
     public static boolean isSystemId(String id) {
@@ -347,6 +352,9 @@ public class Utils {
                 try {
                     final Callable<Long> fn = isFactory ? (Callable<Long>) afn.call() : afn;
                     while (true) {
+                        if (Thread.interrupted()) {
+                            throw new InterruptedException();
+                        }
                         final Long s = fn.call();
                         if (s == null) { // then stop running it
                             break;
@@ -488,6 +496,10 @@ public class Utils {
     }
 
     public static <T> T javaDeserialize(byte[] serialized, Class<T> clazz) {
+        if ("true".equalsIgnoreCase(System.getProperty("java.deserialization.disabled"))) {
+            throw new AssertionError("java deserialization has been disabled and is only safe from within a worker process");
+        }
+
         try {
             ByteArrayInputStream bis = new ByteArrayInputStream(serialized);
             ObjectInputStream ois = null;
@@ -780,8 +792,7 @@ public class Utils {
             Class delegateClass = Class.forName(delegateClassName);
             delegate = (SerializationDelegate) delegateClass.newInstance();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            LOG.error("Failed to construct serialization delegate, falling back to default", e);
-            delegate = new DefaultSerializationDelegate();
+            throw new RuntimeException("Failed to construct serialization delegate class " + delegateClassName, e);
         }
         delegate.prepare(topoConf);
         return delegate;
@@ -1184,10 +1195,19 @@ public class Utils {
         final StringBuilder dump = new StringBuilder();
         final java.lang.management.ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         final java.lang.management.ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), 100);
-        for (java.lang.management.ThreadInfo threadInfo : threadInfos) {
+        for (Entry<Thread, StackTraceElement[]> entry: Thread.getAllStackTraces().entrySet()) {
+            Thread t = entry.getKey();
+            ThreadInfo threadInfo = threadMXBean.getThreadInfo(t.getId());
+            if (threadInfo == null) {
+                //Thread died before we could get the info, skip
+                continue;
+            }
             dump.append('"');
             dump.append(threadInfo.getThreadName());
             dump.append("\" ");
+            if (t.isDaemon()) {
+                dump.append("(DAEMON)");
+            }
             dump.append("\n   lock: ");
             dump.append(threadInfo.getLockName());
             dump.append(" owner: ");
@@ -1195,8 +1215,7 @@ public class Utils {
             final Thread.State state = threadInfo.getThreadState();
             dump.append("\n   java.lang.Thread.State: ");
             dump.append(state);
-            final StackTraceElement[] stackTraceElements = threadInfo.getStackTrace();
-            for (final StackTraceElement stackTraceElement : stackTraceElements) {
+            for (final StackTraceElement stackTraceElement : entry.getValue()) {
                 dump.append("\n        at ");
                 dump.append(stackTraceElement);
             }
@@ -1444,6 +1463,67 @@ public class Utils {
             ret.put(new SimpleVersion(entry.getKey()), Arrays.asList(entry.getValue().split(File.pathSeparator)));
         }
         ret.put(VersionInfo.OUR_VERSION, currentCP);
+        return ret;
+    }
+
+    /**
+     * Get a mapping of the configured supported versions of storm to their actual versions.
+     * @param conf what to read the configuration out of.
+     * @return the map.
+     */
+    public static NavigableMap<String, IVersionInfo> getAlternativeVersionsMap(Map<String, Object> conf) {
+        TreeMap<String, IVersionInfo> ret = new TreeMap<>();
+        Map<String, String> fromConf =
+            (Map<String, String>) conf.getOrDefault(Config.SUPERVISOR_WORKER_VERSION_CLASSPATH_MAP, Collections.emptyMap());
+        for (Map.Entry<String, String> entry : fromConf.entrySet()) {
+            IVersionInfo version = VersionInfo.getFromClasspath(entry.getValue());
+            if (version != null) {
+                ret.put(entry.getKey(), version);
+            } else {
+                LOG.error("Could not find the real version of {} from CP {}", entry.getKey(), entry.getValue());
+                ret.put(entry.getKey(), new IVersionInfo() {
+                    @Override
+                    public String getVersion() {
+                        return "Unknown";
+                    }
+
+                    @Override
+                    public String getRevision() {
+                        return "Unknown";
+                    }
+
+                    @Override
+                    public String getBranch() {
+                        return "Unknown";
+                    }
+
+                    @Override
+                    public String getDate() {
+                        return "Unknown";
+                    }
+
+                    @Override
+                    public String getUser() {
+                        return "Unknown";
+                    }
+
+                    @Override
+                    public String getUrl() {
+                        return "Unknown";
+                    }
+
+                    @Override
+                    public String getSrcChecksum() {
+                        return "Unknown";
+                    }
+
+                    @Override
+                    public String getBuildVersion() {
+                        return "Unknown";
+                    }
+                });
+            }
+        }
         return ret;
     }
 

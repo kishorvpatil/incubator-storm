@@ -118,8 +118,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
     private final MessageBuffer batcher;
     // wait strategy when the netty channel is not writable
     private final IWaitStrategy waitStrategy;
-    KryoValuesSerializer ser;
-    KryoValuesDeserializer deser;
     private volatile Map<Integer, Double> serverLoad = null;
     /**
      * This flag is set to true if and only if a client instance is being closed.
@@ -140,10 +138,9 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         LOG.info("Creating Netty Client, connecting to {}:{}, bufferSize: {}, lowWatermark: {}, highWatermark: {}",
                  host, port, bufferSize, lowWatermark, highWatermark);
 
-        int maxReconnectionAttempts = ObjectReader.getInt(topoConf.get(Config.STORM_MESSAGING_NETTY_MAX_RETRIES));
         int minWaitMs = ObjectReader.getInt(topoConf.get(Config.STORM_MESSAGING_NETTY_MIN_SLEEP_MS));
         int maxWaitMs = ObjectReader.getInt(topoConf.get(Config.STORM_MESSAGING_NETTY_MAX_SLEEP_MS));
-        retryPolicy = new StormBoundedExponentialBackoffRetry(minWaitMs, maxWaitMs, maxReconnectionAttempts);
+        retryPolicy = new StormBoundedExponentialBackoffRetry(minWaitMs, maxWaitMs, -1);
 
         // Initiate connection to remote destination
         this.eventLoopGroup = eventLoopGroup;
@@ -170,8 +167,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
             waitStrategy = ReflectionUtils.newInstance(clazz);
         }
         waitStrategy.prepare(topoConf, WAIT_SITUATION.BACK_PRESSURE_WAIT);
-        ser = new KryoValuesSerializer(topoConf);
-        deser = new KryoValuesDeserializer(topoConf);
     }
 
     /**

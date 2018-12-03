@@ -16,10 +16,11 @@
 
 package org.apache.storm.kafka.spout.trident;
 
+
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,10 +33,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.storm.kafka.spout.KafkaSpoutConfig;
-import org.apache.storm.kafka.spout.config.builder.SingleTopicKafkaSpoutConfiguration;
 import org.apache.storm.kafka.spout.subscription.ManualPartitioner;
 import org.apache.storm.kafka.spout.subscription.TopicFilter;
+import org.apache.storm.kafka.spout.trident.config.builder.SingleTopicKafkaTridentSpoutConfiguration;
 import org.apache.storm.utils.Time;
 import org.apache.storm.utils.Time.SimulatedTime;
 import org.junit.Test;
@@ -51,10 +51,10 @@ public class KafkaTridentSpoutOpaqueCoordinatorTest {
         TopicFilter mockFilter = mock(TopicFilter.class);
         when(mockFilter.getAllSubscribedPartitions(any())).thenReturn(Collections.singleton(expectedPartition));
 
-        KafkaSpoutConfig<String, String> spoutConfig = 
-            SingleTopicKafkaSpoutConfiguration.createKafkaSpoutConfigBuilder(mockFilter, mock(ManualPartitioner.class), -1)
+        KafkaTridentSpoutConfig<String, String> spoutConfig = 
+            SingleTopicKafkaTridentSpoutConfiguration.createKafkaSpoutConfigBuilder(mockFilter, mock(ManualPartitioner.class), -1)
                 .build();
-        KafkaTridentSpoutOpaqueCoordinator<String, String> coordinator = new KafkaTridentSpoutOpaqueCoordinator<>(spoutConfig, ignored -> mockConsumer);
+        KafkaTridentSpoutCoordinator<String, String> coordinator = new KafkaTridentSpoutCoordinator<>(spoutConfig, ignored -> mockConsumer);
 
         List<Map<String, Object>> partitionsForBatch = coordinator.getPartitionsForBatch();
 
@@ -79,10 +79,10 @@ public class KafkaTridentSpoutOpaqueCoordinatorTest {
                 .thenReturn(Collections.singleton(expectedPartition))
                 .thenReturn(allPartitions);
 
-            KafkaSpoutConfig<String, String> spoutConfig = 
-                SingleTopicKafkaSpoutConfiguration.createKafkaSpoutConfigBuilder(mockFilter, mock(ManualPartitioner.class), -1)
+            KafkaTridentSpoutConfig<String, String> spoutConfig = 
+                SingleTopicKafkaTridentSpoutConfiguration.createKafkaSpoutConfigBuilder(mockFilter, mock(ManualPartitioner.class), -1)
                     .build();
-            KafkaTridentSpoutOpaqueCoordinator<String, String> coordinator = new KafkaTridentSpoutOpaqueCoordinator<>(spoutConfig, ignored -> mockConsumer);
+            KafkaTridentSpoutCoordinator<String, String> coordinator = new KafkaTridentSpoutCoordinator<>(spoutConfig, ignored -> mockConsumer);
 
             List<Map<String, Object>> partitionsForBatch = coordinator.getPartitionsForBatch();
 
@@ -91,7 +91,7 @@ public class KafkaTridentSpoutOpaqueCoordinatorTest {
             verify(mockFilter).getAllSubscribedPartitions(mockConsumer);
             assertThat(firstBatchTps, contains(expectedPartition));
 
-            Time.advanceTime(KafkaTridentSpoutOpaqueCoordinator.TIMER_DELAY_MS + spoutConfig.getPartitionRefreshPeriodMs());
+            Time.advanceTime(KafkaTridentSpoutCoordinator.TIMER_DELAY_MS + spoutConfig.getPartitionRefreshPeriodMs());
 
             List<Map<String, Object>> partitionsForSecondBatch = coordinator.getPartitionsForBatch();
             

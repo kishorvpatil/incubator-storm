@@ -45,6 +45,7 @@ import org.apache.storm.scheduler.resource.SchedulingResult;
 import org.apache.storm.scheduler.resource.SchedulingStatus;
 import org.apache.storm.scheduler.resource.normalization.NormalizedResourceOffer;
 import org.apache.storm.scheduler.resource.normalization.NormalizedResourceRequest;
+import org.apache.storm.scheduler.resource.normalization.ResourceMetrics;
 import org.apache.storm.shade.com.google.common.annotations.VisibleForTesting;
 import org.apache.storm.shade.com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -332,7 +333,7 @@ public abstract class BaseResourceAwareStrategy implements IStrategy {
 
         private TreeSet<ObjectResources> getSortedNodesFor(String rackId) {
             return cachedNodes.computeIfAbsent(rackId,
-                (rid) -> sortNodes(rackIdToNodes.get(rid), exec, td, rid, perNodeScheduledCount));
+                (rid) -> sortNodes(rackIdToNodes.getOrDefault(rid, Collections.emptyList()), exec, td, rid, perNodeScheduledCount));
         }
 
         @Override
@@ -603,7 +604,7 @@ public abstract class BaseResourceAwareStrategy implements IStrategy {
      * @return the ids n that node.
      */
     public List<RAS_Node> hostnameToNodes(String hostname) {
-        return hostnameToNodes.get(hostname);
+        return hostnameToNodes.getOrDefault(hostname, Collections.emptyList());
     }
 
     /**
@@ -632,12 +633,14 @@ public abstract class BaseResourceAwareStrategy implements IStrategy {
      */
     static class AllResources {
         List<ObjectResources> objectResources = new LinkedList<>();
-        NormalizedResourceOffer availableResourcesOverall = new NormalizedResourceOffer();
-        NormalizedResourceOffer totalResourcesOverall = new NormalizedResourceOffer();
+        final NormalizedResourceOffer availableResourcesOverall;
+        final NormalizedResourceOffer totalResourcesOverall;
         String identifier;
 
         public AllResources(String identifier) {
             this.identifier = identifier;
+            this.availableResourcesOverall = new NormalizedResourceOffer();
+            this.totalResourcesOverall = new NormalizedResourceOffer();
         }
 
         public AllResources(AllResources other) {
@@ -666,12 +669,14 @@ public abstract class BaseResourceAwareStrategy implements IStrategy {
      */
     static class ObjectResources {
         public final String id;
-        public NormalizedResourceOffer availableResources = new NormalizedResourceOffer();
-        public NormalizedResourceOffer totalResources = new NormalizedResourceOffer();
+        public NormalizedResourceOffer availableResources;
+        public NormalizedResourceOffer totalResources;
         public double effectiveResources = 0.0;
 
         public ObjectResources(String id) {
             this.id = id;
+            this.availableResources = new NormalizedResourceOffer();
+            this.totalResources = new NormalizedResourceOffer();
         }
 
         public ObjectResources(ObjectResources other) {
