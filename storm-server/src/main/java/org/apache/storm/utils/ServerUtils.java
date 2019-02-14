@@ -594,6 +594,7 @@ public class ServerUtils {
             if (!entry.isDirectory()) {
                 if (prefix != null && !entry.getName().startsWith(prefix)) {
                     //No need to extract it, it is not what we are looking for.
+                    LOG.error("Invalid entry {} does not match prefix {}", entry.getName(), prefix);
                     continue;
                 }
                 File file = new File(toDir, entry.getName());
